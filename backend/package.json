@@ -1,39 +1,33 @@
 {
-  "name": "backend",
+  "name": "Quizora",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "directories": {
-    "test": "tests"
-  },
+  "private": true,
+  "description": "Full-Stack AI Quiz Generator Platform",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js",
-    "test": "node --test",
-    "seed": "node scripts/seed.js",
-    "type": "module",
-    "check": "node --check server.js"
+    "test": "npm test --prefix backend && npm test --prefix frontend",
+    "test:backend": "npm test --prefix backend",
+    "test:frontend": "npm test --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.1",
-    "express": "^5.2.1",
-    "helmet": "^8.3.0",
-    "ioredis": "^6.0.0",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.10.1",
-    "morgan": "^1.12.1",
-    "multer": "^2.4.0",
-    "pdf-parse": "^2.4.5",
-    "zod": "^4.6.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+  "keywords": [
+    "quiz",
+    "ai",
+    "nextjs",
+    "express",
+    "pure-javascript",
+    "gamification",
+    "mongodb",
+    "redis"
+  ],
+  "license": "MIT"
 }
