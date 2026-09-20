@@ -1,3 +1,1 @@
 # AI-POWERED-QUIZ_GENERATOR
-
-....
