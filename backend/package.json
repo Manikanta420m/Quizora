@@ -2,13 +2,17 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "type": "module"
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "node --test",
+    "seed": "node scripts/seed.js",
+    "type": "module",
+    "check": "node --check server.js"
   },
   "keywords": [],
   "author": "",
