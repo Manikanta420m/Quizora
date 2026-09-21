@@ -7,7 +7,7 @@
     "lib": "lib",
     "test": "tests"
   },
-  "type" : "module",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -30,5 +30,12 @@
     "react-hook-form": "^7.88.0",
     "tailwind-merge": "^3.7.0",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3"
   }
 }
