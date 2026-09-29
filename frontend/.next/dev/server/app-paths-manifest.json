@@ -2,5 +2,6 @@
   "/leaderboard/page": "app/leaderboard/page.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js",
+  "/quizzes/generate/page": "app/quizzes/generate/page.js",
   "/quizzes/page": "app/quizzes/page.js"
 }
