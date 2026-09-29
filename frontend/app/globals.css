@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --primary-navy: #0F172A;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --accent-electric: #38BDF8;
+  --secondary: #64748B;
+  --border: #E2E8F0;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --success: #22C55E;
+  --error: #EF4444;
+  --warning: #F59E0B;
+}
+
+/* Dark Mode Token Palette */
+.dark {
+  --background: #0B0F19;
+  --foreground: #F8FAFC;
+  --card: #131B2E;
+  --card-foreground: #F8FAFC;
+  --primary-navy: #F8FAFC;
+  --primary: #38BDF8;
+  --primary-hover: #60A5FA;
+  --accent-electric: #38BDF8;
+  --secondary: #94A3B8;
+  --border: #1E293B;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --success: #4ADE80;
+  --error: #F87171;
+  --warning: #FBBF24;
+}
+
+body {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(ellipse at 80% 5%, rgba(56, 189, 248, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 95%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+    url('/images/page-bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Dark Body Ambient Canvas */
+html.dark body,
+.dark body {
+  background-color: #0B0F19 !important;
+  background-image: 
+    radial-gradient(ellipse at 80% 5%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 95%, rgba(37, 99, 235, 0.10) 0%, transparent 50%),
+    url('/images/page-bg.jpg') !important;
+  color: #F8FAFC !important;
+}
+
+/* Dark Mode Universal Surface & Typography Overrides */
+.dark .bg-white {
+  background-color: #131B2E !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: rgba(19, 27, 46, 0.95) !important;
+}
+
+.dark .bg-white\/90 {
+  background-color: rgba(19, 27, 46, 0.90) !important;
+}
+
+.dark .text-\[\#0F172A\] {
+  color: #F8FAFC !important;
+}
+
+.dark .text-\[\#111827\] {
+  color: #F8FAFC !important;
+}
+
+.dark .text-\[\#64748B\] {
+  color: #94A3B8 !important;
+}
+
+.dark .border-\[\#E2E8F0\] {
+  border-color: #1E293B !important;
+}
+
+.dark .bg-\[\#F8FAFC\] {
+  background-color: #0F172A !important;
+}
+
+.dark .hover\:bg-\[\#F8FAFC\]:hover {
+  background-color: #1E293B !important;
+}
+
+.dark .bg-\[\#EFF6FF\] {
+  background-color: rgba(37, 99, 235, 0.18) !important;
+}
+
+.dark .text-\[\#1E40AF\] {
+  color: #93C5FD !important;
+}
+
+.dark .border-\[\#BFDBFE\] {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.dark .border-\[\#CBD5E1\] {
+  border-color: #334155 !important;
+}
+
+.dark .bg-\[\#F1F5F9\] {
+  background-color: #1E293B !important;
+}
+
+.dark .text-\[\#334155\] {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-\[\#475569\] {
+  color: #94A3B8 !important;
+}
+
+.dark .text-\[\#1E293B\] {
+  color: #F1F5F9 !important;
+}
+
+.dark .bg-slate-50 {
+  background-color: #0F172A !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1E293B !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+.dark .text-slate-700 {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-slate-800 {
+  color: #F1F5F9 !important;
+}
+
+.dark .text-slate-900 {
+  color: #F8FAFC !important;
+}
+
+.dark .border-slate-200 {
+  border-color: #1E293B !important;
+}
+
+.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(37, 99, 235, 0.15) !important;
+}
+
+.dark .bg-blue-50\/80 {
+  background-color: rgba(37, 99, 235, 0.20) !important;
+}
+
+.dark .border-blue-200 {
+  border-color: rgba(37, 99, 235, 0.35) !important;
+}
+
+.dark .text-blue-600 {
+  color: #60A5FA !important;
+}
+
+.dark .text-blue-700 {
+  color: #93C5FD !important;
+}
+
+.dark .text-blue-800 {
+  color: #BFDBFE !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border-color: #1E293B !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Crisp SaaS Card Panel */
+.glass-panel {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+}
+
+.dark .glass-panel {
+  background: #131B2E !important;
+  border-color: #1E293B !important;
+}
+
+/* Subtle gradient text (Navy to Electric Blue) */
+.text-gradient {
+  background: linear-gradient(135deg, #2563EB 0%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Dedicated Light Background Utilities */
+.bg-page-light {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(ellipse at 85% 5%, rgba(56, 189, 248, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 95%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+    url('/images/page-bg.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+
+.bg-hero-light {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.6) 0%, rgba(248, 250, 252, 0.85) 100%),
+    url('/images/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-auth-light {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.75) 0%, rgba(248, 250, 252, 0.92) 100%),
+    url('/images/auth-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-pattern-light {
+  background-color: #F8FAFC;
+  background-image: url('/images/ambient-pattern.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* 3D Flip Card Styles */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Print Media Query */
+@media print {
+  header, footer, nav, button, .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
