@@ -1,0 +1,17 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/_global-error/page": "/_global-error",
+  "/favicon.ico/route": "/favicon.ico",
+  "/icon.png/route": "/icon.png",
+  "/dashboard/page": "/dashboard",
+  "/leaderboard/page": "/leaderboard",
+  "/login/page": "/login",
+  "/page": "/",
+  "/quizzes/[id]/page": "/quizzes/[id]",
+  "/quizzes/[id]/play/page": "/quizzes/[id]/play",
+  "/quizzes/create/page": "/quizzes/create",
+  "/quizzes/generate/page": "/quizzes/generate",
+  "/quizzes/page": "/quizzes",
+  "/register/page": "/register",
+  "/quizzes/upload/page": "/quizzes/upload"
+}
