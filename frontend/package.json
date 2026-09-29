@@ -9,11 +9,11 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview",
-    "lint": "eslint .",
-    "test": "vitest"
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint .",
+  "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -33,9 +33,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.5",
     "postcss": "^8.5.28",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.1"
   }
 }
