@@ -1,4 +1,1 @@
-{"timestamp":"00:00:03.503","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:01:23.206","source":"Server","level":"LOG","message":"○ Compiling / ..."}
-{"timestamp":"00:01:48.406","source":"Browser","level":"WARN","message":"Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior=\"smooth\"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior"}
-{"timestamp":"00:01:48.489","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mDetected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior=\\\"smooth\\\"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior\\u001b[39m\""}
+{"timestamp":"00:00:01.134","source":"Server","level":"LOG","message":""}
