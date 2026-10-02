@@ -7,8 +7,10 @@ import {
   seed,
   generate,
   generateFromDocument,
+  generateFlashcards,
   submitAttempt,
   getAttempts,
+  getQuizLeaderboard,
 } from '../controllers/quizController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { uploadDocument } from '../middleware/uploadMiddleware.js';
@@ -20,12 +22,14 @@ const router = express.Router();
  */
 router.get('/', getAll);
 router.get('/:id', getById);
+router.get('/:id/leaderboard', getQuizLeaderboard);
 
 /**
  * Protected Quiz Management & Interactive Test-Taking Endpoints
  */
 router.post('/', protect, create);
 router.post('/generate', protect, generate);
+router.post('/generate-flashcards', protect, generateFlashcards);
 router.post('/from-document', protect, uploadDocument.single('document'), generateFromDocument);
 router.post('/seed', protect, seed);
 router.post('/:id/submit', protect, submitAttempt);
