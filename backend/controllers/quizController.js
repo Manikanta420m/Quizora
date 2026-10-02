@@ -138,6 +138,26 @@ export const generate = async (req, res, next) => {
 };
 
 /**
+ * @route   POST /api/quizzes/generate-flashcards
+ * @desc    Generate Flashcards using AI
+ * @access  Private
+ */
+export const generateFlashcards = async (req, res, next) => {
+  try {
+    const { generateFlashcardsSchema } = await import('../validators/quizValidators.js');
+    const validatedData = generateFlashcardsSchema.parse(req.body);
+    const flashcards = await aiService.generateFlashcards(validatedData);
+
+    res.status(200).json({
+      success: true,
+      data: flashcards,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @route   POST /api/quizzes/from-document
  * @desc    Upload document (PDF/TXT/MD), parse text, and generate assessment quiz
  * @access  Private
@@ -224,6 +244,23 @@ export const getAttempts = async (req, res, next) => {
   }
 };
 
+/**
+ * @route   GET /api/quizzes/:id/leaderboard
+ * @desc    Get leaderboard for a specific quiz
+ * @access  Public
+ */
+export const getQuizLeaderboard = async (req, res, next) => {
+  try {
+    const leaderboard = await quizService.getQuizLeaderboard(req.params.id);
+    res.status(200).json({
+      success: true,
+      leaderboard,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   create,
   getAll,
@@ -234,6 +271,7 @@ export default {
   generateFromDocument,
   submitAttempt,
   getAttempts,
+  getQuizLeaderboard,
 };
 
 
