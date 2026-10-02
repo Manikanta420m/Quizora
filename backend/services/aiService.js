@@ -274,6 +274,80 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
 };
 
 /**
+ * Generate Flashcards using Google Gemini API or OpenAI API
+ */
+const generateFlashcardsWithExternalAI = async (apiKey, topic, numberOfCards, customInstructions) => {
+  const isGemini = apiKey.startsWith('AIza') || !apiKey.startsWith('sk-');
+
+  const systemInstruction = `You are an expert educator. Generate a set of high-quality study flashcards in strict JSON.
+  
+Strict JSON format requirements:
+{
+  "topic": "${topic.toLowerCase().trim()}",
+  "flashcards": [
+    {
+      "front": "Concept, term, or question (keep it concise)",
+      "back": "Clear, detailed definition, answer, or explanation"
+    }
+  ]
+}
+Do NOT wrap the JSON in Markdown code fences if possible. Return strictly valid JSON.`;
+
+  const userPrompt = `Topic: ${topic}
+Total Flashcards: ${numberOfCards}
+${customInstructions ? `Additional focus instructions: ${customInstructions}` : ''}`;
+
+  if (isGemini) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: systemInstruction }, { text: userPrompt }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+      }),
+    });
+    if (!res.ok) throw new Error(`Gemini API error (${res.status})`);
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) throw new Error('No completion text returned');
+    return JSON.parse(rawText);
+  } else {
+    // OpenAI fallback
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: userPrompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+      }),
+    });
+    if (!res.ok) throw new Error(`OpenAI API error (${res.status})`);
+    const data = await res.json();
+    const rawText = data?.choices?.[0]?.message?.content;
+    if (!rawText) throw new Error('No completion text returned');
+    return JSON.parse(rawText);
+  }
+};
+
+/**
+ * Procedural fallback for Flashcards
+ */
+const generateProceduralFlashcards = (topic, numberOfCards) => {
+  const capTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
+  return {
+    topic: capTopic,
+    flashcards: Array.from({ length: numberOfCards }).map((_, i) => ({
+      front: `${capTopic} Concept ${i + 1}`,
+      back: `This is the procedural definition for ${capTopic} concept ${i + 1}.`,
+    })),
+  };
+};
+
+/**
  * Intelligent Fallback Generator when no external API key is supplied
  */
 const generateProceduralQuiz = (topic, difficulty, numberOfQuestions, customInstructions) => {
@@ -511,7 +585,7 @@ const generateProceduralQuizFromDocument = (
  * Generates structured questions and saves the resulting quiz
  */
 export const generateAndSaveQuiz = async (userId, params) => {
-  const { topic, difficulty = 'medium', numberOfQuestions = 5, customInstructions = '' } = params;
+  const { topic, difficulty = 'medium', numberOfQuestions = 5, customInstructions = '', timeLimit } = params;
   const apiKey = env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
 
   let generatedData = null;
@@ -533,6 +607,7 @@ export const generateAndSaveQuiz = async (userId, params) => {
         ...externalQuiz,
         topic: topic.toLowerCase().trim(),
         difficulty,
+        timeLimit: timeLimit || Math.max(5, numberOfQuestions * 2),
         sourceType: 'ai',
         sourceMetadata: {
           provider: apiKey.startsWith('AIza') ? 'google-gemini' : 'openai',
@@ -551,6 +626,7 @@ export const generateAndSaveQuiz = async (userId, params) => {
   if (!generatedData) {
     logger.info(`Generating quiz with built-in AI engine for "${topic}" (${difficulty}, ${numberOfQuestions} Qs)...`);
     generatedData = generateProceduralQuiz(topic, difficulty, numberOfQuestions, customInstructions);
+    generatedData.timeLimit = timeLimit || Math.max(5, numberOfQuestions * 2);
   }
 
   // 3. Ensure valid schema with Zod
@@ -629,6 +705,42 @@ export const generateQuizFromDocument = async (userId, docData, params) => {
   logger.success(`Document Quiz "${savedQuiz.title}" successfully created and saved (ID: ${savedQuiz._id || savedQuiz.id})`);
 
   return savedQuiz;
+};
+
+/**
+ * Generate AI Flashcards (No DB saving, just returns JSON)
+ */
+export const generateFlashcards = async (params) => {
+  const { topic, numberOfCards, customInstructions } = params;
+  let generatedData = null;
+  let usedProvider = 'Procedural fallback';
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openAIKey = process.env.OPENAI_API_KEY;
+
+  if (geminiKey || openAIKey) {
+    try {
+      const externalCards = await generateFlashcardsWithExternalAI(
+        geminiKey || openAIKey,
+        topic,
+        numberOfCards,
+        customInstructions
+      );
+      
+      generatedData = externalCards;
+      usedProvider = geminiKey ? 'Gemini AI' : 'OpenAI';
+      logger.success(`Successfully generated flashcards with ${usedProvider}`);
+    } catch (error) {
+      logger.error(`External AI flashcards failed. Falling back. Error: ${error.message}`);
+    }
+  }
+
+  if (!generatedData) {
+    logger.warn('Using procedural generator for flashcards');
+    generatedData = generateProceduralFlashcards(topic, numberOfCards);
+  }
+
+  return generatedData;
 };
 
 /**
@@ -923,6 +1035,7 @@ export const generateWeakTopicPractice = async (userId, params) => {
 export default {
   generateAndSaveQuiz,
   generateQuizFromDocument,
+  generateFlashcards,
   generateHint,
   explainConcept,
   generateSimilarQuestion,

@@ -424,6 +424,64 @@ export const getUserAttempts = async (userId, quizId) => {
   return attempts.reverse();
 };
 
+/**
+ * Get leaderboard for a specific quiz
+ */
+export const getQuizLeaderboard = async (quizId, limit = 10) => {
+  if (isMongoConnected()) {
+    // We want the highest score for each user on this quiz.
+    // MongoDB aggregation or just find all, group in memory for simplicity/speed for now
+    const attempts = await QuizAttempt.find({ quizId }).populate('userId', 'name avatar');
+    
+    const userBest = new Map();
+    attempts.forEach(a => {
+      const uId = a.userId?._id?.toString() || a.userId?.id;
+      if (!uId) return;
+      if (!userBest.has(uId) || userBest.get(uId).score < a.score) {
+        userBest.set(uId, {
+          userId: uId,
+          name: a.userId?.name || 'Anonymous',
+          avatar: a.userId?.avatar || '',
+          score: a.score,
+          percentage: a.percentage,
+          timeSpentSeconds: a.timeSpentSeconds,
+        });
+      }
+    });
+
+    return Array.from(userBest.values())
+      .sort((a, b) => b.score - a.score || a.timeSpentSeconds - b.timeSpentSeconds)
+      .slice(0, limit)
+      .map((entry, index) => ({ rank: index + 1, ...entry }));
+  }
+
+  // Dev memory fallback
+  const attempts = Array.from(devMemoryAttempts.values()).filter(
+    (a) => a.quizId?.toString() === quizId.toString()
+  );
+
+  const userBest = new Map();
+  attempts.forEach(a => {
+    const uId = a.userId?.toString();
+    if (!uId) return;
+    if (!userBest.has(uId) || userBest.get(uId).score < a.score) {
+      userBest.set(uId, {
+        userId: uId,
+        name: 'Learner',
+        avatar: '',
+        score: a.score,
+        percentage: a.percentage,
+        timeSpentSeconds: a.timeSpentSeconds,
+      });
+    }
+  });
+
+  return Array.from(userBest.values())
+    .sort((a, b) => b.score - a.score || a.timeSpentSeconds - b.timeSpentSeconds)
+    .slice(0, limit)
+    .map((entry, index) => ({ rank: index + 1, ...entry }));
+};
+
 export default {
   createQuiz,
   getQuizzes,
@@ -432,5 +490,6 @@ export default {
   seedStarterQuizzes,
   submitQuizAttempt,
   getUserAttempts,
+  getQuizLeaderboard,
 };
 
