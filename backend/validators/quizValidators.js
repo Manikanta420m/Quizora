@@ -81,7 +81,8 @@ export const generateQuizSchema = z.object({
     .min(2, 'Topic must be at least 2 characters long')
     .max(100, 'Topic cannot exceed 100 characters'),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
-  numberOfQuestions: z.number().int().min(1).max(20).default(5),
+  numberOfQuestions: z.number().int().min(1).max(50).default(5),
+  timeLimit: z.number().int().min(1).max(180).optional(),
   customInstructions: z.string().trim().max(1000).optional().default(''),
 });
 
@@ -93,8 +94,25 @@ export const generateDocumentQuizSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   numberOfQuestions: z.preprocess(
     (val) => (typeof val === 'string' ? parseInt(val, 10) : val || 5),
-    z.number().int().min(1).max(20).default(5)
+    z.number().int().min(1).max(50).default(5)
   ),
+  timeLimit: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() ? parseInt(val, 10) : undefined),
+    z.number().int().min(1).max(180).optional()
+  ),
+  customInstructions: z.string().trim().max(1000).optional().default(''),
+});
+
+/**
+ * AI Flashcards Generation Request Schema
+ */
+export const generateFlashcardsSchema = z.object({
+  topic: z
+    .string({ required_error: 'Topic is required for AI generation' })
+    .trim()
+    .min(2, 'Topic must be at least 2 characters long')
+    .max(100, 'Topic cannot exceed 100 characters'),
+  numberOfCards: z.number().int().min(1).max(50).default(10),
   customInstructions: z.string().trim().max(1000).optional().default(''),
 });
 
@@ -120,6 +138,7 @@ export default {
   quizQuerySchema,
   generateQuizSchema,
   generateDocumentQuizSchema,
+  generateFlashcardsSchema,
   submitQuizSchema,
 };
 
