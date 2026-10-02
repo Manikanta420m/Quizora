@@ -30,7 +30,7 @@ mongoose.connection.on('disconnected', () => {
  */
 export const connectDB = async () => {
   try {
-    logger.info(`Connecting to MongoDB...`);
+    logger.info(`Connecting to MongoDB at: ${env.MONGODB_URI}...`);
     await mongoose.connect(env.MONGODB_URI, {
       serverSelectionTimeoutMS: 3000,
     });
