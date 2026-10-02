@@ -44,14 +44,7 @@ const userSchema = new mongoose.Schema(
       enum: ['local', 'google'],
       default: 'local',
     },
-    role: {
-      type: String,
-      enum: {
-        values: ['student', 'teacher', 'admin'],
-        message: '{VALUE} is not a valid role',
-      },
-      default: 'student',
-    },
+
     avatar: {
       type: String,
       default: '',
