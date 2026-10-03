@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('auth_token');
       setToken(null);
       setUser(null);
-      router.push('/login');
+      router.push('/');
     }
   };
 
