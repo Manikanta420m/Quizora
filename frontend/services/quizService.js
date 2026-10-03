@@ -93,6 +93,22 @@ export const quizService = {
   },
 
   /**
+   * Generate Flashcards with AI on any topic
+   */
+  generateFlashcards: async (params, token) => {
+    const headers = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return await apiRequest('/quizzes/generate-flashcards', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+  },
+
+  /**
    * Upload a document (PDF, TXT, MD) and generate a customized assessment quiz
    */
   generateQuizFromDocument: async (formData, token) => {
@@ -126,8 +142,6 @@ export const quizService = {
 
 
   /**
-   * Get user's past attempts for a quiz
-   */
   getQuizAttempts: async (quizId, token) => {
     const headers = {};
     if (token) {
@@ -137,6 +151,13 @@ export const quizService = {
     return await apiRequest(`/quizzes/${quizId}/attempts`, {
       headers,
     });
+  },
+
+  /**
+   * Get leaderboard for a specific quiz
+   */
+  getQuizLeaderboard: async (quizId) => {
+    return await apiRequest(`/quizzes/${quizId}/leaderboard`);
   },
 };
 
