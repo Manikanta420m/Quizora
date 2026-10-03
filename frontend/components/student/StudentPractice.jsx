@@ -14,51 +14,120 @@ import {
   AlertTriangle,
   ArrowRight,
   RefreshCw,
+  BookOpen,
+  ChevronDown
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import { useQuery } from '@tanstack/react-query';
+import quizService from '@/services/quizService';
+import { useAuth } from '@/context/AuthContext';
 
-export default function StudentPractice({ onGenerateWeakPractice, isGeneratingWeakPractice }) {
+export default function StudentPractice({ onNavigateTab }) {
   const router = useRouter();
+  const { token } = useAuth();
   const [selectedDrill, setSelectedDrill] = useState(null);
+  const [speedDrillTime, setSpeedDrillTime] = useState(1);
+  const [sourceQuizId, setSourceQuizId] = useState('');
+  const [isGeneratingWeakPractice, setIsGeneratingWeakPractice] = useState(false);
+
+  // Fetch real quizzes from the backend
+  const { data: quizzesResponse, isLoading } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => quizService.getQuizzes({}),
+  });
+
+  const myQuizzes = quizzesResponse?.quizzes || [];
+
+  const handleSimulateAction = (modeId) => {
+    if (!sourceQuizId) return;
+    setSelectedDrill(modeId);
+    setTimeout(() => {
+      setSelectedDrill(null);
+      router.push(`/quizzes/${sourceQuizId}/play?mode=${modeId}`);
+    }, 1200);
+  };
+
+  const handleWeakTopicDrill = async () => {
+    if (!sourceQuizId) return;
+    const selectedQuiz = myQuizzes.find(q => (q._id || q.id) === sourceQuizId);
+    if (!selectedQuiz) return;
+
+    setSelectedDrill('weak-topics');
+    setIsGeneratingWeakPractice(true);
+
+    try {
+      const payload = {
+        topic: selectedQuiz.topic + " (Remediation)",
+        difficulty: 'hard',
+        numberOfQuestions: 10,
+      };
+      
+      const res = await quizService.generateQuiz(payload, token);
+
+      const newQuizId = res.quiz?._id || res.quiz?.id || res._id || res.id;
+      if (newQuizId) {
+        router.push(`/quizzes/${newQuizId}/play?mode=weak-topics`);
+      } else {
+        throw new Error("No quiz ID returned");
+      }
+    } catch (err) {
+      console.error('Generation failed, using original quiz:', err);
+      router.push(`/quizzes/${sourceQuizId}/play?mode=weak-topics`);
+    } finally {
+      setSelectedDrill(null);
+      setIsGeneratingWeakPractice(false);
+    }
+  };
 
   const practiceModes = [
     {
       id: 'weak-topics',
       title: '🎯 Weak Topic Remediation',
-      desc: 'Let AI target your lowest scoring areas: DSA (52%) and Node.js (64%).',
+      desc: 'Let AI target your lowest scoring areas based on your recent analytics.',
       tag: 'Recommended',
       badgeColor: 'danger',
       actionText: 'Launch Adaptive Drill',
-      action: () => onGenerateWeakPractice?.(['dsa', 'node.js']),
+      action: handleWeakTopicDrill,
     },
     {
-      id: 'flashcards',
-      title: '🃏 Interactive 3D Flashcards',
-      desc: 'Rapidly flip through concept definitions, syntax flashcards, and algorithm steps.',
-      tag: 'Popular',
-      badgeColor: 'ai',
-      actionText: 'Open Flashcards',
-      action: () => router.push('/quizzes'),
+      id: 'mistakes-review',
+      title: '🧠 Learn from Mistakes',
+      desc: 'Revisit the questions you got wrong recently. AI provides hints and step-by-step explanations.',
+      tag: 'High Impact',
+      badgeColor: 'warning',
+      actionText: 'Review Wrong Answers',
+      action: () => handleSimulateAction('mistakes-review'),
     },
     {
       id: 'speed-drill',
-      title: '⚡ 60-Second Speed Drill',
-      desc: 'Fast-paced multiple choice showdown with a countdown timer to test recall.',
+      title: '⚡ Time Attack Drills',
+      desc: 'Fast-paced multiple choice showdown. Test your recall under pressure.',
       tag: 'Bonus XP',
-      badgeColor: 'warning',
+      badgeColor: 'primary',
       actionText: 'Start Speed Drill',
-      action: () => router.push('/quizzes/generate'),
+      action: () => {
+        if (!sourceQuizId) return;
+        router.push(`/quizzes/${sourceQuizId}/play?mode=speed&time=${speedDrillTime}`);
+      },
+      hasTimeSelector: true,
     },
     {
-      id: 'custom-topic',
-      title: '🧠 Custom Topic Synthesis',
-      desc: 'Pick any programming subject, library, or CS topic for instant AI quiz formulation.',
-      tag: 'Flexible',
-      badgeColor: 'info',
-      actionText: 'Create Custom Quiz',
-      action: () => router.push('/quizzes/generate'),
+      id: 'flashcards',
+      title: '🃏 Interactive Flashcards',
+      desc: 'Rapidly flip through concept definitions, syntax flashcards, and algorithm steps.',
+      tag: 'Study',
+      badgeColor: 'success',
+      actionText: 'Open Flashcards',
+      action: () => {
+        if (!sourceQuizId) return;
+        const selectedQuiz = myQuizzes.find(q => (q._id || q.id) === sourceQuizId);
+        if (selectedQuiz) {
+          localStorage.setItem('pendingFlashcardTopic', selectedQuiz.topic);
+          onNavigateTab('generate_flashcards');
+        }
+      },
     },
   ];
 
@@ -78,6 +147,35 @@ export default function StudentPractice({ onGenerateWeakPractice, isGeneratingWe
         </p>
       </div>
 
+      {/* Source Quiz Selector */}
+      <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-4">
+        <label className="text-sm font-extrabold text-[#0F172A] flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-[#2563EB]" />
+          Select Source Quiz (Recent or Saved)
+        </label>
+        <div className="relative">
+          <select
+            value={sourceQuizId}
+            onChange={(e) => setSourceQuizId(e.target.value)}
+            className="w-full pl-4 pr-12 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all text-sm appearance-none cursor-pointer font-medium text-[#0F172A]"
+          >
+            <option value="" disabled>Select a quiz to practice with...</option>
+            {isLoading ? (
+              <option value="" disabled>Loading your quizzes...</option>
+            ) : myQuizzes.length > 0 ? (
+              myQuizzes.map(quiz => (
+                <option key={quiz._id || quiz.id} value={quiz._id || quiz.id}>
+                  {quiz.title} ({quiz.topic})
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>No quizzes found.</option>
+            )}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        </div>
+      </Card>
+
       {/* Practice Modes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {practiceModes.map((mode) => (
@@ -96,15 +194,42 @@ export default function StudentPractice({ onGenerateWeakPractice, isGeneratingWe
               <p className="text-xs text-[#64748B] leading-relaxed">{mode.desc}</p>
             </div>
 
+              {mode.hasTimeSelector && (
+                <div className="flex bg-[#F8FAFC] border border-[#E2E8F0] p-1 rounded-xl">
+                  {[1, 3, 5].map(min => (
+                    <button
+                      key={min}
+                      onClick={() => setSpeedDrillTime(min)}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        speedDrillTime === min 
+                          ? 'bg-white text-[#2563EB] shadow-sm border border-[#E2E8F0]' 
+                          : 'text-[#64748B] hover:text-[#0F172A]'
+                      }`}
+                    >
+                      {min} Min
+                    </button>
+                  ))}
+                </div>
+              )}
+
             <Button
               variant="primary"
               size="sm"
               onClick={mode.action}
-              disabled={isGeneratingWeakPractice && mode.id === 'weak-topics'}
-              className="w-full text-xs gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] cursor-pointer"
+              disabled={selectedDrill === mode.id || !sourceQuizId}
+              className={`w-full text-xs gap-1.5 cursor-pointer shadow-sm ${!sourceQuizId ? 'bg-slate-100 text-slate-400 hover:bg-slate-100' : 'bg-[#2563EB] hover:bg-[#1D4ED8]'}`}
             >
-              <span>{isGeneratingWeakPractice && mode.id === 'weak-topics' ? 'Synthesizing Drill...' : mode.actionText}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {selectedDrill === mode.id ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <span>{!sourceQuizId ? 'Select Quiz First' : mode.actionText}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </Button>
           </Card>
         ))}

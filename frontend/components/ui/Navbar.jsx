@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from './Button';
 import ThemeSwitch from './ThemeSwitch';
+import { motion } from 'framer-motion';
 
 /**
  * Clean & Simple SaaS Navbar
@@ -17,72 +18,130 @@ export function Navbar() {
   const pathname = usePathname();
   const { isAuthenticated, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const handleLinkClick = (href) => {
+    if (href.includes('#')) {
+      const hashPart = href.substring(href.indexOf('#'));
+      setActiveHash(hashPart);
+    } else if (href === '/') {
+      setActiveHash('');
+    }
+    setIsMobileMenuOpen(false);
+  };
+
+  const [activeHash, setActiveHash] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    setActiveHash(window.location.hash);
+    
+    const handleHashChange = () => {
+      setActiveHash(window.location.hash);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+
+    // Setup Intersection Observer for scroll tracking
+    const observerOptions = {
+      root: null,
+      rootMargin: '-30% 0px -50% 0px', // Triggers when section is in the middle of viewport
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveHash(`#${entry.target.id}`);
+        }
+      });
+      
+      // If we scroll to the very top (Hero section), reset hash so 'Home' becomes active
+      if (window.scrollY < 100) {
+        setActiveHash('');
+      }
+    }, observerOptions);
+
+    const sections = document.querySelectorAll('section[id]');
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      sections.forEach((section) => observer.unobserve(section));
+    };
+  }, []);
+
   const isActive = (href) => {
-    if (href === '/') return pathname === '/';
+    if (href.includes('#')) {
+      const hashPart = href.substring(href.indexOf('#'));
+      return pathname === '/' && activeHash === hashPart;
+    }
+    if (href === '/') {
+      return pathname === '/' && !activeHash;
+    }
     return pathname?.startsWith(href);
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#E2E8F0] bg-white/95 backdrop-blur-md shadow-2xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/85 backdrop-blur-xl shadow-sm transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo: 🤖 Quizora */}
-        <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
+        <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-3 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/quizora-icon.png"
-            alt="Quizora"
-            className="w-8 h-8 rounded-lg object-contain group-hover:scale-105 transition-transform duration-200"
-          />
-          <span className="font-extrabold text-xl text-[#0F172A] tracking-tight">Quizora</span>
+          <div className="relative">
+            <div className="absolute inset-0 bg-blue-500 rounded-lg blur-md opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+            <img
+              src="/images/quizora-icon.png"
+              alt="Quizora"
+              className="relative w-8 h-8 rounded-lg object-contain group-hover:scale-105 transition-transform duration-300 shadow-sm"
+            />
+          </div>
+          <span className="font-extrabold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 tracking-tight">
+            Quizora
+          </span>
         </Link>
 
-        {/* Center Desktop Navigation Links: Home / Dashboard | Features | How It Works | Categories */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href={isAuthenticated ? "/dashboard" : "/"}
-            className={`text-sm font-medium transition-colors ${
-              (isAuthenticated ? isActive('/dashboard') : (isActive('/') && pathname === '/'))
-                ? 'text-[#2563EB] font-semibold'
-                : 'text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            {isAuthenticated ? 'Dashboard' : 'Home'}
-          </Link>
-          <Link
-            href="/#features"
-            className="text-sm font-medium text-[#64748B] hover:text-[#0F172A] transition-colors"
-          >
-            Features
-          </Link>
-          <Link
-            href="/#how-it-works"
-            className="text-sm font-medium text-[#64748B] hover:text-[#0F172A] transition-colors"
-          >
-            How It Works
-          </Link>
-          <Link
-            href="/quizzes"
-            className={`text-sm font-medium transition-colors ${
-              isActive('/quizzes')
-                ? 'text-[#2563EB] font-semibold'
-                : 'text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            Categories
-          </Link>
-          <Link
-            href="/leaderboard"
-            className={`text-sm font-medium transition-colors ${
-              isActive('/leaderboard')
-                ? 'text-[#2563EB] font-semibold'
-                : 'text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            Leaderboard
-          </Link>
+        {/* Center Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1 relative px-1.5 py-1.5 bg-slate-100/50 border border-slate-200/80 rounded-full shadow-[inset_0_1px_4px_rgba(0,0,0,0.04)]" onMouseLeave={() => setHoveredIndex(null)}>
+          {[
+            { name: isAuthenticated ? 'Dashboard' : 'Home', href: isAuthenticated ? '/dashboard' : '/' },
+            { name: 'Features', href: '/#features' },
+            { name: 'How It Works', href: '/#how-it-works' },
+            { name: 'Leaderboard', href: '/#leaderboard' },
+            { name: 'Categories', href: '/#categories' }
+          ].map((item, idx) => {
+            const active = isActive(item.href);
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => handleLinkClick(item.href)}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                className={`relative px-4 py-1.5 text-sm font-semibold transition-colors z-10 ${
+                  active ? 'text-[#0F172A]' : 'text-[#64748B] hover:text-[#0F172A]'
+                }`}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="active-nav-pill"
+                    className="absolute inset-0 bg-white rounded-full -z-10 shadow-sm border border-slate-200/80"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                {!active && hoveredIndex === idx && (
+                  <motion.div
+                    layoutId="hover-nav-pill"
+                    className="absolute inset-0 bg-slate-200/60 rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{item.name}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right Section: Theme Toggle & Login / [Get Started] */}
@@ -144,7 +203,7 @@ export function Navbar() {
           <nav className="flex flex-col space-y-1">
             <Link
               href={isAuthenticated ? "/dashboard" : "/"}
-              onClick={closeMobileMenu}
+              onClick={() => handleLinkClick(isAuthenticated ? "/dashboard" : "/")}
               className={`px-3 py-2 rounded-lg text-sm font-medium ${
                 (isAuthenticated ? isActive('/dashboard') : (isActive('/') && pathname === '/'))
                   ? 'text-[#2563EB] bg-blue-50 font-semibold'
@@ -155,39 +214,47 @@ export function Navbar() {
             </Link>
             <Link
               href="/#features"
-              onClick={closeMobileMenu}
-              className="px-3 py-2 rounded-lg text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]"
+              onClick={() => handleLinkClick('/#features')}
+              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                isActive('/#features')
+                  ? 'text-[#2563EB] bg-blue-50 font-semibold'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+              }`}
             >
               Features
             </Link>
             <Link
               href="/#how-it-works"
-              onClick={closeMobileMenu}
-              className="px-3 py-2 rounded-lg text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]"
-            >
-              How It Works
-            </Link>
-            <Link
-              href="/quizzes"
-              onClick={closeMobileMenu}
+              onClick={() => handleLinkClick('/#how-it-works')}
               className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                isActive('/quizzes')
+                isActive('/#how-it-works')
                   ? 'text-[#2563EB] bg-blue-50 font-semibold'
                   : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
               }`}
             >
-              Categories
+              How It Works
             </Link>
             <Link
-              href="/leaderboard"
-              onClick={closeMobileMenu}
+              href="/#leaderboard"
+              onClick={() => handleLinkClick('/#leaderboard')}
               className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                isActive('/leaderboard')
+                isActive('/#leaderboard')
                   ? 'text-[#2563EB] bg-blue-50 font-semibold'
                   : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
               }`}
             >
               Leaderboard
+            </Link>
+            <Link
+              href="/#categories"
+              onClick={() => handleLinkClick('/#categories')}
+              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                isActive('/#categories')
+                  ? 'text-[#2563EB] bg-blue-50 font-semibold'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+              }`}
+            >
+              Categories
             </Link>
             {isAuthenticated && (
               <Link

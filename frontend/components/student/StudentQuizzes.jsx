@@ -3,10 +3,11 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import quizService from '@/services/quizService';
 import {
   BookOpen,
   Search,
-  Filter,
   CheckCircle2,
   Clock,
   RotateCcw,
@@ -16,116 +17,52 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
+  Share2,
+  Trophy,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 
-export default function StudentQuizzes({ initialQuizzes = [] }) {
+export default function StudentQuizzes() {
   const router = useRouter();
-  const [filterTab, setFilterTab] = useState('all'); // 'all' | 'completed' | 'in-progress' | 'saved'
   const [searchQuery, setSearchQuery] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+  const [filterTab, setFilterTab] = useState('all'); // 'all' or 'saved'
+  const [savedQuizzes, setSavedQuizzes] = useState(new Set()); // Mock saved state
 
-  // Comprehensive Student Quizzes Data
-  const defaultQuizzes = [
-    {
-      id: 'qz_1',
-      title: 'JavaScript Basics & ES6',
-      topic: 'JavaScript',
-      difficulty: 'Easy',
-      totalQuestions: 15,
-      score: 92,
-      passed: true,
-      status: 'completed',
-      date: 'Sep 18, 2026',
-      saved: true,
-      timeSpent: '12m',
-    },
-    {
-      id: 'qz_2',
-      title: 'React Fundamentals & Component Lifecycle',
-      topic: 'React',
-      difficulty: 'Medium',
-      totalQuestions: 12,
-      score: 78,
-      passed: true,
-      status: 'completed',
-      date: 'Sep 17, 2026',
-      saved: true,
-      timeSpent: '14m',
-    },
-    {
-      id: 'qz_3',
-      title: 'DSA: Arrays & String Manipulation',
-      topic: 'DSA',
-      difficulty: 'Medium',
-      totalQuestions: 10,
-      score: 88,
-      passed: true,
-      status: 'completed',
-      date: 'Sep 15, 2026',
-      saved: false,
-      timeSpent: '16m',
-    },
-    {
-      id: 'qz_4',
-      title: 'Node.js & Express REST APIs',
-      topic: 'Node.js',
-      difficulty: 'Medium',
-      totalQuestions: 15,
-      score: 71,
-      passed: true,
-      status: 'completed',
-      date: 'Sep 14, 2026',
-      saved: false,
-      timeSpent: '18m',
-    },
-    {
-      id: 'qz_5',
-      title: 'JavaScript Fundamentals: Closures & Scope',
-      topic: 'JavaScript',
-      difficulty: 'Hard',
-      totalQuestions: 25,
-      score: 72,
-      passed: null,
-      status: 'in-progress',
-      date: 'In Progress',
-      saved: true,
-      timeSpent: '8m',
-    },
-    {
-      id: 'qz_6',
-      title: 'MongoDB Schema Design & Indexing',
-      topic: 'Databases',
-      difficulty: 'Hard',
-      totalQuestions: 10,
-      score: null,
-      passed: null,
-      status: 'saved',
-      date: 'Saved for later',
-      saved: true,
-      timeSpent: '—',
-    },
-  ];
+  // Fetch real quizzes from the backend
+  const { data: quizzesResponse, isLoading } = useQuery({
+    queryKey: ['quizzes', searchQuery],
+    queryFn: () => quizService.getQuizzes({ search: searchQuery }),
+  });
 
-  const quizzes = defaultQuizzes;
+  const quizzes = quizzesResponse?.quizzes || [];
 
-  const filteredQuizzes = useMemo(() => {
-    return quizzes.filter((q) => {
-      const matchFilter =
-        filterTab === 'all' ||
-        (filterTab === 'saved' && q.saved) ||
-        q.status === filterTab;
-
-      const matchSearch =
-        q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.difficulty.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchFilter && matchSearch;
+  const handleShare = (quizId) => {
+    const url = `${window.location.origin}/quizzes/${quizId}/play`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(quizId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+  const handleToggleSave = (quizId) => {
+    setSavedQuizzes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(quizId)) {
+        newSet.delete(quizId);
+      } else {
+        newSet.add(quizId);
+      }
+      return newSet;
     });
-  }, [quizzes, filterTab, searchQuery]);
+  };
 
+  const filteredQuizzes = quizzes.filter(quiz => {
+    if (filterTab === 'saved') {
+      return savedQuizzes.has(quiz._id || quiz.id);
+    }
+    return true;
+  });
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
@@ -156,29 +93,28 @@ export default function StudentQuizzes({ initialQuizzes = [] }) {
 
       {/* Filter Tabs & Search Bar */}
       <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {[
-            { id: 'all', label: 'All Quizzes' },
-            { id: 'completed', label: 'Completed' },
-            { id: 'in-progress', label: 'In Progress' },
-            { id: 'saved', label: 'Saved ❤️' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setFilterTab(tab.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                filterTab === tab.id
-                  ? 'bg-[#2563EB] text-white shadow-xs'
-                  : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0]">
+          <button
+            type="button"
+            onClick={() => setFilterTab('all')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              filterTab === 'all' ? 'bg-white text-[#2563EB] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            All Quizzes
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab('saved')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              filterTab === 'saved' ? 'bg-white text-[#2563EB] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <Bookmark className="w-4 h-4 inline-block mr-1.5" />
+            Saved ({savedQuizzes.size})
+          </button>
         </div>
-
+        
         {/* Search Input */}
         <div className="relative w-full md:w-64">
           <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -194,28 +130,34 @@ export default function StudentQuizzes({ initialQuizzes = [] }) {
 
       {/* Quizzes List Grid */}
       <div className="space-y-3">
-        {filteredQuizzes.length === 0 ? (
+        {isLoading ? (
+          <div className="p-12 text-center bg-white rounded-3xl border border-[#E2E8F0] space-y-3">
+            <h3 className="font-bold text-sm text-[#0F172A]">Loading Quizzes...</h3>
+          </div>
+        ) : filteredQuizzes.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-3xl border border-[#E2E8F0] space-y-3">
             <BookOpen className="w-10 h-10 text-[#94A3B8] mx-auto" />
-            <h3 className="font-bold text-sm text-[#0F172A]">No quizzes match your filters</h3>
-            <p className="text-xs text-[#64748B]">Try searching for another topic or clear your filter.</p>
+            <h3 className="font-bold text-sm text-[#0F172A]">No quizzes found</h3>
+            <p className="text-xs text-[#64748B]">Try searching for another topic.</p>
           </div>
         ) : (
-          filteredQuizzes.map((quiz) => (
+          filteredQuizzes.map((quiz) => {
+            const isSaved = savedQuizzes.has(quiz._id || quiz.id);
+            return (
             <Card
-              key={quiz.id}
+              key={quiz._id || quiz.id}
               className="bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 p-5 rounded-2xl shadow-2xs hover:shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <Badge variant={quiz.difficulty === 'Easy' ? 'success' : quiz.difficulty === 'Medium' ? 'warning' : 'danger'}>
+                  <Badge variant={quiz.difficulty === 'easy' ? 'success' : quiz.difficulty === 'medium' ? 'warning' : 'danger'}>
                     {quiz.difficulty}
                   </Badge>
                   <span className="text-[11px] font-mono text-[#64748B]">{quiz.topic}</span>
                   <span className="text-[11px] text-[#64748B]">&bull;</span>
-                  <span className="text-[11px] text-[#64748B]">{quiz.totalQuestions} Questions</span>
+                  <span className="text-[11px] text-[#64748B]">{quiz.questions?.length || 0} Questions</span>
                   <span className="text-[11px] text-[#64748B]">&bull;</span>
-                  <span className="text-[11px] text-[#64748B]">{quiz.date}</span>
+                  <span className="text-[11px] text-[#64748B]">{new Date(quiz.createdAt).toLocaleDateString()}</span>
                 </div>
 
                 <h3 className="font-extrabold text-sm sm:text-base text-[#0F172A] truncate">
@@ -225,46 +167,59 @@ export default function StudentQuizzes({ initialQuizzes = [] }) {
 
               {/* Status & Actions */}
               <div className="flex items-center gap-4 shrink-0">
-                {quiz.score !== null ? (
-                  <div className="text-right">
-                    <span className="text-xl font-black text-[#2563EB] font-mono block">
-                      {quiz.score}%
-                    </span>
-                    <span className="text-[10px] text-emerald-600 font-bold">
-                      {quiz.score >= 80 ? 'Mastered ✓' : 'Passed'}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-amber-600 block">Not Started</span>
-                    <span className="text-[10px] text-[#64748B]">Ready to take</span>
-                  </div>
-                )}
-
                 <div className="flex items-center gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => router.push('/quizzes/generate')}
+                    onClick={() => handleToggleSave(quiz._id || quiz.id)}
+                    className={`text-xs w-9 h-9 p-0 border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer ${isSaved ? 'text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100' : 'text-[#64748B]'}`}
+                    title={isSaved ? "Remove from Saved" : "Save Quiz"}
+                  >
+                    <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleShare(quiz._id || quiz.id)}
                     className="text-xs gap-1 border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>Retake</span>
+                    {copiedId === (quiz._id || quiz.id) ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-600">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-3.5 h-3.5 text-[#2563EB]" />
+                        <span>Share</span>
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => router.push(`/quizzes/${quiz._id || quiz.id}/leaderboard`)}
+                    className="text-xs gap-1 border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer text-amber-600 border-amber-200 bg-amber-50"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Leaderboard</span>
                   </Button>
 
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => router.push('/quizzes/generate')}
+                    onClick={() => router.push(`/quizzes/${quiz._id || quiz.id}/play`)}
                     className="text-xs gap-1 bg-[#2563EB] hover:bg-[#1D4ED8] cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Review</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Play</span>
                   </Button>
                 </div>
               </div>
             </Card>
-          ))
+          )})
         )}
       </div>
     </div>

@@ -2,61 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
-import { healthService } from '@/services/api';
-import ThemeSwitch from './ThemeSwitch';
+
 
 export default function Footer() {
-  // Query backend health every 30 seconds for live status indicator
-  const { data: health, isError } = useQuery({
-    queryKey: ['footerHealth'],
-    queryFn: healthService.getHealth,
-    refetchInterval: 30000,
-    retry: 1,
-  });
-
-  const isOnline = !isError && health?.success;
-
   return (
     <footer className="w-full border-t border-[#E2E8F0] bg-white text-[#64748B] text-xs">
-      {/* Live System Status Bar */}
-      <div className="border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="relative flex h-2 w-2">
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isOnline ? 'bg-emerald-400' : 'bg-rose-400'
-                }`}
-              />
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isOnline ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-            </span>
-            <span className="font-semibold text-[#0F172A]">
-              {isOnline ? 'All Systems Operational' : 'Backend Connecting...'}
-            </span>
-            <span className="text-slate-300 hidden sm:inline">&bull;</span>
-            <span className="text-[#64748B] hidden sm:inline">
-              REST API {health?.services?.server?.nodeVersion || 'v20+'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 font-mono text-[11px]">
-            <span className="text-emerald-600 font-medium">100% JavaScript</span>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 lg:gap-8">
           {/* Brand & Tagline */}
           <div className="space-y-3 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -80,7 +37,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center gap-4 pt-2">
               <a
-                href="https://github.com"
+                href="https://github.com/Manikanta420m"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] transition-colors"
@@ -91,7 +48,7 @@ export default function Footer() {
                 <span>GitHub</span>
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/manikanta-rongali-05b670296/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] transition-colors"
@@ -182,17 +139,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Copyright & Legal with Theme Switch */}
-        <div className="mt-10 pt-6 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-center justify-between gap-4 text-[#64748B]">
-          <p>
-            &copy; {new Date().getFullYear()} Quizora. All rights reserved.
-          </p>
-          <div className="flex flex-wrap items-center gap-4 text-[11px]">
-            <ThemeSwitch size="sm" showLabel labelPosition="left" />
-            <span className="text-slate-300 hidden sm:inline">&bull;</span>
-            <span className="text-[#0F172A] font-medium">Pure JavaScript v1.0</span>
-          </div>
-        </div>
+
       </div>
     </footer>
   );

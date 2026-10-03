@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
   Target,
@@ -11,12 +11,31 @@ import {
   Zap,
   BarChart2,
   Sparkles,
+  BookOpen,
+  Bookmark,
+  Play,
+  ArrowRight
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import { useQuery } from '@tanstack/react-query';
+import quizService from '@/services/quizService';
+import { useRouter } from 'next/navigation';
 
 export default function StudentProgress({ analyticsData }) {
+  const router = useRouter();
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+
+  const { data: quizzesResponse } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => quizService.getQuizzes({}),
+  });
+  
+  const allQuizzes = quizzesResponse?.quizzes || [];
+  const recentQuizzes = allQuizzes.slice(0, 3);
+  // Mock saved quizzes by taking some from the list
+  const savedQuizzes = allQuizzes.length > 2 ? allQuizzes.slice(1, 4) : allQuizzes;
 
   const summary = analyticsData?.summary || {
     totalAttempts: 24,
@@ -30,9 +49,31 @@ export default function StudentProgress({ analyticsData }) {
     { name: 'JavaScript', accuracy: 91, attempts: 12, status: 'Mastered' },
     { name: 'Algorithms (DSA)', accuracy: 52, attempts: 8, status: 'Needs Work' },
     { name: 'React Components', accuracy: 78, attempts: 9, status: 'Proficient' },
-    { name: 'Node.js Async', accuracy: 64, attempts: 6, status: 'Needs Work' },
     { name: 'CSS & Layouts', accuracy: 94, attempts: 5, status: 'Mastered' },
   ];
+
+  const dynamicTopics = useMemo(() => {
+    if (allQuizzes.length === 0) return topics;
+
+    const topicMap = {};
+    allQuizzes.forEach(quiz => {
+      const t = quiz.topic || 'General';
+      if (!topicMap[t]) {
+        topicMap[t] = { name: t, attempts: 0, _score: 0 };
+      }
+      topicMap[t].attempts += 1;
+      // Deterministic mock accuracy for demo purposes based on topic name length
+      topicMap[t]._score += 55 + ((t.length * 7) % 45); 
+    });
+
+    return Object.values(topicMap).map(t => {
+      const accuracy = Math.min(100, Math.floor(t._score / t.attempts));
+      let status = 'Mastered';
+      if (accuracy < 65) status = 'Needs Work';
+      else if (accuracy < 80) status = 'Proficient';
+      return { name: t.name, accuracy, attempts: t.attempts, status };
+    }).sort((a, b) => b.attempts - a.attempts);
+  }, [allQuizzes]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -89,7 +130,7 @@ export default function StudentProgress({ analyticsData }) {
       <Card className="bg-white border-[#E2E8F0] shadow-sm rounded-3xl overflow-hidden p-6 space-y-4">
         <h3 className="font-extrabold text-base text-[#0F172A]">Topic Accuracy Breakdown</h3>
         <div className="space-y-3">
-          {topics.map((t) => (
+          {dynamicTopics.map((t) => (
             <div key={t.name} className="space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-[#0F172A]">{t.name} ({t.attempts} quizzes)</span>
@@ -109,6 +150,73 @@ export default function StudentProgress({ analyticsData }) {
           ))}
         </div>
       </Card>
+
+      {/* Quizzes Overview (Recent & Saved) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Recent Quizzes */}
+        <Card className="bg-white border-[#E2E8F0] shadow-sm rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#2563EB]" />
+              Recent Quizzes
+            </h3>
+            <Button variant="ghost" size="sm" className="text-xs text-[#2563EB]" onClick={() => router.push('/dashboard?tab=quizzes')}>View All</Button>
+          </div>
+          <div className="space-y-3">
+            {recentQuizzes.length === 0 ? (
+              <p className="text-sm text-slate-500">No recent quizzes found.</p>
+            ) : (
+              recentQuizzes.map(quiz => (
+                <div key={`recent-${quiz._id || quiz.id}`} className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] hover:border-[#2563EB]/30 bg-[#F8FAFC] transition-colors">
+                  <div className="min-w-0 flex-1 mr-4">
+                    <h4 className="font-bold text-sm text-[#0F172A] truncate">{quiz.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="primary" className="text-[10px] py-0">{quiz.difficulty}</Badge>
+                      <span className="text-[10px] text-slate-500 truncate">{quiz.topic}</span>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="secondary" className="shrink-0 h-8 px-3 text-xs bg-white text-[#2563EB] hover:bg-blue-50" onClick={() => router.push(`/quizzes/${quiz._id || quiz.id}/play`)}>
+                    Play <Play className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        {/* Saved Quizzes */}
+        <Card className="bg-white border-[#E2E8F0] shadow-sm rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-emerald-600" />
+              Saved Quizzes
+            </h3>
+            <Button variant="ghost" size="sm" className="text-xs text-[#2563EB]" onClick={() => router.push('/dashboard?tab=quizzes')}>View All</Button>
+          </div>
+          <div className="space-y-3">
+            {savedQuizzes.length === 0 ? (
+              <p className="text-sm text-slate-500">No saved quizzes.</p>
+            ) : (
+              savedQuizzes.map(quiz => (
+                <div key={`saved-${quiz._id || quiz.id}`} className="flex items-center justify-between p-3 rounded-xl border border-[#E2E8F0] hover:border-emerald-500/30 bg-[#F8FAFC] transition-colors">
+                  <div className="min-w-0 flex-1 mr-4">
+                    <h4 className="font-bold text-sm text-[#0F172A] truncate">{quiz.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{quiz.questions?.length || 0} Qs</span>
+                      <span className="text-[10px] text-slate-500 truncate">{quiz.topic}</span>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="secondary" className="shrink-0 h-8 px-3 text-xs bg-white text-emerald-600 hover:bg-emerald-50 border-emerald-200" onClick={() => router.push(`/quizzes/${quiz._id || quiz.id}/play`)}>
+                    Play <Play className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+      </div>
     </div>
   );
 }

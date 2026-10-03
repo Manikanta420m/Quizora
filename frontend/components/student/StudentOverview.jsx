@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,6 +23,7 @@ import {
   Brain,
   ChevronRight,
   Play,
+  Swords,
   RotateCcw,
   Bookmark,
   Award,
@@ -31,10 +32,15 @@ import {
   FileText,
   MessageSquare,
   HelpCircle,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import { useQuery } from '@tanstack/react-query';
+import quizService from '@/services/quizService';
+import { useAuth } from '@/context/AuthContext';
 
 export default function StudentOverview({
   user,
@@ -47,24 +53,99 @@ export default function StudentOverview({
   onOpenAIAssistant,
 }) {
   const router = useRouter();
+  const { token } = useAuth();
   const [copiedChallenge, setCopiedChallenge] = useState(false);
   const [activeCurvePeriod, setActiveCurvePeriod] = useState('W4');
+  
+  const [showQuickStartModal, setShowQuickStartModal] = useState(false);
+  const [qsQuestions, setQsQuestions] = useState(10);
+  const [qsTimeLimit, setQsTimeLimit] = useState(10);
+  const [isQuickStarting, setIsQuickStarting] = useState(false);
+
+  // Fetch recent quizzes
+  const { data: quizzesResponse } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => quizService.getQuizzes({ limit: 5 }),
+  });
+  const recentQuiz = quizzesResponse?.quizzes?.[0];
+
+  const handleQuickStart = async () => {
+    if (!recentQuiz) return;
+    setIsQuickStarting(true);
+    try {
+      const res = await quizService.generateQuiz({
+        topic: recentQuiz.topic + " (Practice)",
+        difficulty: 'medium',
+        numberOfQuestions: Number(qsQuestions),
+        timeLimit: Number(qsTimeLimit),
+      }, token);
+      
+      const newQuizId = res?.quiz?._id || res?.quiz?.id || res?._id || res?.id;
+      if (newQuizId) {
+        router.push(`/quizzes/${newQuizId}/play?mode=quick&time=${qsTimeLimit}`);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsQuickStarting(false);
+      setShowQuickStartModal(false);
+    }
+  };
 
   // Daily Goals checklist state
   const [dailyGoals, setDailyGoals] = useState([
-    { id: 1, text: 'Complete 1 quiz', completed: true },
-    { id: 2, text: 'Answer 20 questions', completed: true },
+    { id: 1, text: 'Complete 1 quiz', completed: false },
+    { id: 2, text: 'Answer 20 questions', completed: false },
     { id: 3, text: 'Practice one weak topic', completed: false },
   ]);
 
+  // Load from local storage and reset at midnight
+  useEffect(() => {
+    const savedGoals = localStorage.getItem('quizora_daily_goals');
+    const savedDate = localStorage.getItem('quizora_daily_goals_date');
+    const today = new Date().toDateString();
+
+    if (savedDate === today && savedGoals) {
+      setDailyGoals(JSON.parse(savedGoals));
+    } else {
+      localStorage.setItem('quizora_daily_goals_date', today);
+      localStorage.setItem('quizora_daily_goals', JSON.stringify(dailyGoals));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleGoal = (id) => {
-    setDailyGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, completed: !g.completed } : g))
-    );
+    setDailyGoals((prev) => {
+      const updated = prev.map((g) => (g.id === id ? { ...g, completed: !g.completed } : g));
+      localStorage.setItem('quizora_daily_goals', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const [newGoalText, setNewGoalText] = useState('');
+
+  const addGoal = (e) => {
+    e.preventDefault();
+    if (!newGoalText.trim()) return;
+    setDailyGoals((prev) => {
+      const updated = [...prev, { id: Date.now(), text: newGoalText.trim(), completed: false }];
+      localStorage.setItem('quizora_daily_goals', JSON.stringify(updated));
+      return updated;
+    });
+    setNewGoalText('');
+  };
+
+  const removeGoal = (e, id) => {
+    e.stopPropagation();
+    setDailyGoals((prev) => {
+      const updated = prev.filter((g) => g.id !== id);
+      localStorage.setItem('quizora_daily_goals', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const completedGoalsCount = dailyGoals.filter((g) => g.completed).length;
-  const goalsProgressPercent = Math.round((completedGoalsCount / dailyGoals.length) * 100);
+  const goalsProgressPercent = dailyGoals.length > 0 ? Math.round((completedGoalsCount / dailyGoals.length) * 100) : 0;
 
   // Student metrics
   const summary = analyticsData?.summary || {
@@ -175,203 +256,350 @@ export default function StudentOverview({
       {/* ================================================================= */}
       {/* 1. PERSONALIZED WELCOME BANNER & QUICK ACTIONS */}
       {/* ================================================================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white shadow-xl relative overflow-hidden">
-        {/* Ambient subtle glow */}
-        <div className="absolute right-0 top-0 bottom-0 w-96 bg-gradient-to-l from-[#2563EB]/25 to-transparent pointer-events-none" />
+      <div className="relative p-6 sm:p-8 rounded-3xl border border-white/60 shadow-xl overflow-hidden group">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-blue-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob" />
+        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-indigo-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-50%] left-[20%] w-[50%] h-[150%] bg-sky-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-4000" />
+        
+        {/* Glassmorphism Surface */}
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-3xl" />
 
-        <div className="space-y-3 relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-[#38BDF8] border border-blue-400/30 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Student Workspace &bull; Daily Target Active</span>
+        {/* Ambient subtle graphic */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1/2 bg-cover bg-right opacity-20 pointer-events-none mix-blend-overlay [mask-image:linear-gradient(to_left,black_20%,transparent_100%)] transition-transform duration-1000 group-hover:scale-105"
+          style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
+          aria-hidden="true"
+        />
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-4 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 text-blue-600 border border-white shadow-sm text-xs font-bold backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI Student Workspace &bull; Daily Target Active</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-800">
+              Good morning, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{displayName}</span>! 👋
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 font-medium">
+              Ready to test your knowledge today? Master weak topics, keep your 7-day streak alive, and climb the leaderboard!
+            </p>
+
+            {/* Daily Objective Actionable Callout */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/70 border border-white shadow-sm text-sm font-semibold backdrop-blur-md transition-all hover:bg-white hover:shadow-md">
+              <Target className="w-4 h-4 text-blue-600" />
+              <span className="text-slate-700">
+                🎯 <strong className="text-blue-600">Today&apos;s goal:</strong>{' '}
+                {completedGoalsCount === dailyGoals.length && dailyGoals.length > 0
+                  ? 'All goals completed! 🎉'
+                  : `Complete daily habits (${completedGoalsCount}/${dailyGoals.length} finished)`}
+              </span>
+            </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Good morning, {displayName}! 👋
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300">
-            Ready to test your knowledge today? Master weak topics, keep your 7-day streak alive, and climb the leaderboard!
-          </p>
+          {/* 15. Quick Action Buttons */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+            <Button
+              size="lg"
+              onClick={() => onNavigateTab('generate')}
+              className="w-full sm:w-auto text-sm gap-2 shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 cursor-pointer text-white transition-all hover:-translate-y-0.5"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Generate Quiz</span>
+            </Button>
 
-          {/* Daily Objective Actionable Callout */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-xs font-medium backdrop-blur-sm">
-            <Target className="w-4 h-4 text-[#38BDF8]" />
-            <span>
-              🎯 <strong className="text-white">Today&apos;s goal:</strong> Complete 2 quizzes (1/2 finished)
-            </span>
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => onNavigateTab('generate_pdf')}
+              className="w-full sm:w-auto bg-white/80 hover:bg-white text-slate-700 border-white gap-2 text-sm cursor-pointer shadow-sm backdrop-blur-md transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <UploadCloud className="w-4 h-4 text-slate-500" />
+              <span>Upload PDF</span>
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => onNavigateTab('practice')}
+              className="w-full sm:w-auto bg-white/80 hover:bg-white text-slate-700 border-white gap-2 text-sm cursor-pointer shadow-sm backdrop-blur-md transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <Target className="w-4 h-4 text-blue-500" />
+              <span>Practice</span>
+            </Button>
           </div>
-        </div>
-
-        {/* 15. Quick Action Buttons */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 relative z-10">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => router.push('/quizzes/generate')}
-            className="w-full sm:w-auto text-xs gap-1.5 shadow-md bg-gradient-to-r from-[#2563EB] to-[#38BDF8] hover:brightness-110 cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>✨ Generate Quiz</span>
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => router.push('/quizzes/upload')}
-            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5 text-xs backdrop-blur-sm cursor-pointer"
-          >
-            <UploadCloud className="w-3.5 h-3.5" />
-            <span>📄 Upload PDF</span>
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onNavigateTab('practice')}
-            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5 text-xs backdrop-blur-sm cursor-pointer"
-          >
-            <Target className="w-3.5 h-3.5 text-[#38BDF8]" />
-            <span>🎯 Practice</span>
-          </Button>
         </div>
       </div>
 
       {/* ================================================================= */}
-      {/* 2. QUICK STATS (4 PRIMARY CARDS + 4 SUPPORTING METRICS) */}
+      {/* 2. MASTER DASHBOARD HEADER (PERFORMANCE + STREAK + LEADERBOARD) */}
       {/* ================================================================= */}
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Accuracy */}
-          <Card className="bg-white border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow p-5 rounded-3xl">
-            <div className="flex items-center justify-between text-xs text-[#64748B]">
-              <span className="font-medium">Accuracy</span>
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                <Target className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-[#0F172A] font-mono mt-2">
-              {summary.averageScore}%
-            </div>
-            <span className="text-[11px] text-emerald-600 font-semibold mt-1 block flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> +4% this week
-            </span>
-          </Card>
+      <div className="relative rounded-3xl border border-white/60 shadow-xl overflow-hidden mb-8 group">
+        {/* Animated Background Orbs for Dashboard Cards */}
+        <div className="absolute top-[10%] left-[20%] w-[40%] h-[80%] bg-purple-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob" />
+        <div className="absolute top-[10%] right-[20%] w-[40%] h-[80%] bg-teal-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[40%] w-[30%] h-[50%] bg-rose-100/60 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-4000" />
+        
+        {/* Glassmorphism Surface */}
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-3xl" />
 
-          {/* Card 2: Quizzes Completed */}
-          <Card className="bg-white border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow p-5 rounded-3xl">
-            <div className="flex items-center justify-between text-xs text-[#64748B]">
-              <span className="font-medium">Quizzes Completed</span>
-              <div className="w-8 h-8 rounded-xl bg-sky-50 text-[#0284C7] flex items-center justify-center">
-                <BookOpen className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-[#0F172A] font-mono mt-2">
-              {summary.totalAttempts}
-            </div>
-            <span className="text-[11px] text-[#64748B] mt-1 block">Across 6 tech topics</span>
-          </Card>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-white/50">
+          
+          {/* Column 1: Performance Overview */}
+          <div className="p-7 sm:p-8 space-y-7 bg-white/30 backdrop-blur-sm">
+             <div className="flex items-center justify-between pb-3 border-b border-white/50">
+                <h3 className="font-extrabold text-[#0F172A] text-[15px] flex items-center gap-2 uppercase tracking-wider">
+                   <TrendingUp className="w-4 h-4 text-[#2563EB]" />
+                   Performance
+                </h3>
+             </div>
+             
+             {/* Main Stats (Compact) */}
+             <div className="space-y-5">
+               {/* Accuracy */}
+               <div className="flex items-center justify-between p-2 hover:bg-white rounded-2xl transition-colors -mx-2">
+                 <div className="flex items-center gap-3 text-xs font-bold text-[#64748B]">
+                   <div className="w-8 h-8 rounded-xl bg-blue-100/50 text-[#2563EB] flex items-center justify-center shadow-2xs">
+                     <Target className="w-4 h-4" />
+                   </div>
+                   Accuracy
+                 </div>
+                 <div className="text-right">
+                   <div className="text-2xl font-black text-[#0F172A] font-mono">{summary.averageScore}%</div>
+                   <span className="text-[11px] text-emerald-600 font-bold flex items-center justify-end gap-1">
+                     <TrendingUp className="w-3 h-3" /> +4%
+                   </span>
+                 </div>
+               </div>
 
-          {/* Card 3: Questions Solved */}
-          <Card className="bg-white border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow p-5 rounded-3xl">
-            <div className="flex items-center justify-between text-xs text-[#64748B]">
-              <span className="font-medium">Questions Solved</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#7C3AED] flex items-center justify-center">
-                <Brain className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-[#0F172A] font-mono mt-2">
-              {summary.totalQuestionsAnswered}
-            </div>
-            <span className="text-[11px] text-[#64748B] mt-1 block">208 answered correctly</span>
-          </Card>
+               {/* Quizzes */}
+               <div className="flex items-center justify-between p-2 hover:bg-white rounded-2xl transition-colors -mx-2">
+                 <div className="flex items-center gap-3 text-xs font-bold text-[#64748B]">
+                   <div className="w-8 h-8 rounded-xl bg-sky-100/50 text-[#0284C7] flex items-center justify-center shadow-2xs">
+                     <BookOpen className="w-4 h-4" />
+                   </div>
+                   Completed
+                 </div>
+                 <div className="text-right">
+                   <div className="text-2xl font-black text-[#0F172A] font-mono">{summary.totalAttempts}</div>
+                   <span className="text-[11px] text-[#64748B] font-medium">quizzes</span>
+                 </div>
+               </div>
 
-          {/* Card 4: Streak */}
-          <Card className="bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-200 shadow-sm hover:shadow-md transition-shadow p-5 rounded-3xl">
-            <div className="flex items-center justify-between text-xs text-amber-900 font-bold">
-              <span>Day Streak</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                <Flame className="w-4 h-4 text-[#F59E0B]" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-amber-600 font-mono mt-2 flex items-center gap-1.5">
-              <span>🔥 {streakDays}</span>
-              <span className="text-xs font-normal text-slate-500">Days</span>
-            </div>
-            <span className="text-[11px] text-amber-800 font-medium mt-1 block">
-              Best streak: {bestStreak} days
-            </span>
-          </Card>
-        </div>
+               {/* Solved */}
+               <div className="flex items-center justify-between p-2 hover:bg-white rounded-2xl transition-colors -mx-2">
+                 <div className="flex items-center gap-3 text-xs font-bold text-[#64748B]">
+                   <div className="w-8 h-8 rounded-xl bg-purple-100/50 text-[#7C3AED] flex items-center justify-center shadow-2xs">
+                     <Brain className="w-4 h-4" />
+                   </div>
+                   Solved
+                 </div>
+                 <div className="text-right">
+                   <div className="text-2xl font-black text-[#0F172A] font-mono">{summary.totalQuestionsAnswered}</div>
+                   <span className="text-[11px] text-[#64748B] font-medium">questions</span>
+                 </div>
+               </div>
+             </div>
 
-        {/* Supporting Secondary Micro-Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-          <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
-            <span className="text-[11px] text-[#64748B] block">Total XP</span>
-            <span className="font-mono font-bold text-sm text-[#2563EB]">{summary.totalXpEarned.toLocaleString()} XP</span>
+             {/* Minor Stats (Super Compact Grid) */}
+             <div className="pt-6 border-t border-[#E2E8F0]/80 grid grid-cols-2 gap-4 text-center">
+               <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3 shadow-2xs hover:shadow-sm transition-shadow">
+                 <span className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Total XP</span>
+                 <span className="font-mono text-base font-black text-[#2563EB]">{summary.totalXpEarned.toLocaleString()}</span>
+               </div>
+               <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3 shadow-2xs hover:shadow-sm transition-shadow">
+                 <span className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Study Time</span>
+                 <span className="font-mono text-base font-black text-[#0F172A]">4.8h</span>
+               </div>
+             </div>
           </div>
-          <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
-            <span className="text-[11px] text-[#64748B] block">Study Time</span>
-            <span className="font-mono font-bold text-sm text-[#0F172A]">4.8 Hours</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
-            <span className="text-[11px] text-[#64748B] block">Perfect Quizzes (100%)</span>
-            <span className="font-mono font-bold text-sm text-emerald-600">6 Quizzes</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
-            <span className="text-[11px] text-[#64748B] block">Topics Mastered</span>
-            <span className="font-mono font-bold text-sm text-[#0F172A]">3 Topics</span>
-          </div>
+          
+<div className="p-7 sm:p-8 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]/80">
+                      <div>
+                        <span className="text-xs font-extrabold uppercase tracking-widest text-[#64748B] block mb-1">
+                          Your Learning Streak
+                        </span>
+                        <h3 className="text-2xl font-black text-[#0F172A] flex items-center gap-2">
+                          <Flame className="w-6 h-6 text-[#F59E0B]" />
+                          <span>{streakDays} Day Streak</span>
+                        </h3>
+                      </div>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs self-start sm:self-auto">
+                        🔥 Best: {bestStreak} Days
+                      </span>
+                    </div>
+          
+                    {/* Days of Week Circle Checkmarks */}
+                    <div className="space-y-3">
+                      <span className="text-xs text-[#64748B] font-bold block">This Week&apos;s Activity:</span>
+                      <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+                        {weekDays.map((d, i) => (
+                          <div key={i} className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto rounded-full bg-gradient-to-b from-amber-50 to-amber-100/50 border-2 border-amber-300 text-amber-600 flex items-center justify-center font-bold text-sm shadow-sm transition-transform hover:scale-110">
+                              ✓
+                            </div>
+                            <span className="text-xs font-bold text-[#64748B] uppercase">{d.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+          
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-xs flex items-center justify-between shadow-2xs">
+                      <span className="font-semibold text-amber-900">Complete one quiz today to keep your streak alive!</span>
+                      <span className="font-black text-amber-700 bg-white px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs whitespace-nowrap shrink-0">12h left</span>
+                    </div>
+          
+                    {/* Streak Milestones */}
+                    <div className="space-y-2 pt-2">
+                      <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block">
+                        Milestones
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: '3 Days', achieved: true },
+                          { label: '7 Days', achieved: true },
+                          { label: '14 Days', achieved: false },
+                          { label: '30 Days', achieved: false },
+                          { label: '100 Days', achieved: false },
+                        ].map((m) => (
+                          <span
+                            key={m.label}
+                            className={`px-3 py-1 rounded-xl text-xs font-mono font-bold border transition-all ${
+                              m.achieved
+                                ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs'
+                                : 'bg-[#F8FAFC] text-[#94A3B8] border-[#E2E8F0]'
+                            }`}
+                          >
+                            🔥 {m.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+<div className="p-7 sm:p-8 space-y-5 bg-[#FAFAFA]/50">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]/80">
+                      <div>
+                        <h3 className="font-extrabold text-[#0F172A] text-[15px] flex items-center gap-2 uppercase tracking-wider">
+                          <Trophy className="w-4 h-4 text-amber-500" />
+                          <span>Leaderboard</span>
+                        </h3>
+                        <p className="text-[11px] text-[#64748B] font-medium mt-0.5">Updated real-time from Redis</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onNavigateTab('leaderboard')}
+                        className="text-xs font-bold text-[#2563EB] hover:text-[#1D4ED8] hover:underline transition-colors"
+                      >
+                        View All &rarr;
+                      </button>
+                    </div>
+          
+                    {/* Standings table */}
+                    <div className="space-y-3">
+                      {weeklyLeaderboard.map((item) => (
+                        <div
+                          key={item.rank}
+                          className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                            item.isMe
+                              ? 'bg-blue-50 border-[#2563EB] ring-2 ring-[#2563EB]/20 shadow-sm'
+                              : 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1] shadow-2xs'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="font-mono font-black text-sm w-6 text-center text-[#64748B]">
+                              {item.medal}
+                            </span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.avatar}
+                              alt={item.name}
+                              className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+                            />
+                            <span className="font-extrabold text-sm text-[#0F172A] truncate">
+                              {item.name} {item.isMe && <span className="text-[#2563EB] ml-1">(You)</span>}
+                            </span>
+                          </div>
+          
+                          <div className="text-right shrink-0">
+                            <span className="font-black text-sm font-mono text-[#2563EB] block">
+                              {item.xp} XP
+                            </span>
+                            <span className="text-[10px] font-bold font-mono text-emerald-600 block mt-0.5 bg-emerald-50 inline-block px-1.5 rounded">
+                              {item.score}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+          
+                    <div className="pt-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => onNavigateTab('leaderboard')}
+                        className="w-full text-xs font-bold gap-1.5 border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] shadow-2xs cursor-pointer py-2.5 rounded-xl"
+                      >
+                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                        <span>View Full Leaderboard &rarr;</span>
+                      </Button>
+                    </div>
+                  </div>
         </div>
       </div>
 
       {/* ================================================================= */}
       {/* 5. CONTINUE LEARNING (FIRST MAJOR ACTION SECTION) */}
       {/* ================================================================= */}
-      <Card className="bg-gradient-to-r from-blue-50/70 via-white to-sky-50/50 border-blue-200 p-6 sm:p-7 rounded-3xl shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-white/60 shadow-xl overflow-hidden group space-y-4 mb-8">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-[-50%] right-[-10%] w-[40%] h-[200%] bg-blue-200/50 rounded-full mix-blend-multiply filter blur-[60px] animate-blob animation-delay-2000" />
+        <div className="absolute top-[-50%] left-[-10%] w-[40%] h-[200%] bg-indigo-100/50 rounded-full mix-blend-multiply filter blur-[60px] animate-blob" />
+        
+        {/* Glassmorphism Surface */}
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider">
-              <Play className="w-3.5 h-3.5 fill-[#2563EB]" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider bg-white/50 px-2 py-0.5 rounded-md border border-white">
+              <Play className="w-3.5 h-3.5 fill-blue-600" />
               <span>Continue Learning</span>
             </div>
-            <h2 className="text-xl font-extrabold text-[#0F172A] tracking-tight">
-              JavaScript Fundamentals
+            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+              {recentQuiz ? recentQuiz.topic : 'JavaScript Fundamentals'}
             </h2>
-            <p className="text-xs text-[#64748B]">
-              In progress &bull; Scope, Closures, and Async Execution
+            <p className="text-xs text-slate-600 font-medium">
+              {recentQuiz ? `Based on your recent activity: ${recentQuiz.title}` : 'In progress • Scope, Closures, and Async Execution'}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <span className="text-2xl font-black text-[#2563EB] font-mono">72%</span>
-              <span className="text-[11px] text-[#64748B] block font-mono">18 / 25 questions</span>
+          <div className="flex items-center gap-4 bg-white/40 p-3 rounded-2xl border border-white shadow-sm backdrop-blur-md">
+            <div className="text-right pr-2 border-r border-slate-200/60">
+              <span className="text-2xl font-black text-blue-600 font-mono">
+                {recentQuiz && recentQuiz.scores?.length > 0 ? `${Math.max(...recentQuiz.scores)}%` : '--'}
+              </span>
+              <span className="text-[11px] text-slate-500 block font-bold uppercase tracking-wider">Best Score</span>
             </div>
             <Button
               variant="primary"
               size="md"
-              onClick={() => router.push('/quizzes/generate')}
-              className="gap-2 text-xs shadow-md bg-[#2563EB] hover:bg-[#1D4ED8] cursor-pointer"
+              onClick={() => {
+                if (recentQuiz) {
+                  setShowQuickStartModal(true);
+                } else {
+                  onNavigateTab('generate');
+                }
+              }}
+              className="gap-2 text-xs shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 cursor-pointer transition-all hover:-translate-y-0.5"
             >
-              <span>Continue</span>
+              <span>{recentQuiz ? 'Practice Again' : 'Generate Quiz'}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
-
-        {/* Progress bar */}
-        <div className="space-y-1.5">
-          <div className="w-full h-3 rounded-full bg-[#E2E8F0] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#38BDF8] transition-all duration-500 shadow-xs"
-              style={{ width: '72%' }}
-            />
-          </div>
-          <div className="flex justify-between text-[11px] text-[#64748B] font-mono">
-            <span>7 questions remaining</span>
-            <span>Target: 80% passing grade</span>
-          </div>
-        </div>
-      </Card>
+      </div>
 
       {/* ================================================================= */}
       {/* 6. AI RECOMMENDED QUIZZES */}
@@ -433,219 +661,31 @@ export default function StudentOverview({
         </div>
       </div>
 
-      {/* ================================================================= */}
-      {/* 3. STREAK SYSTEM & 4. DAILY GOALS (TWO-COLUMN HIGHLIGHT) */}
-      {/* ================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Module 3: Streak System */}
-        <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                Your Learning Streak
-              </span>
-              <h3 className="text-xl font-black text-[#0F172A] flex items-center gap-2">
-                <Flame className="w-6 h-6 text-[#F59E0B]" />
-                <span>{streakDays} Day Streak</span>
-              </h3>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-              🔥 Best: {bestStreak} Days
-            </span>
-          </div>
+            
 
-          {/* Days of Week Circle Checkmarks */}
-          <div className="space-y-2">
-            <span className="text-xs text-[#64748B] font-medium block">This Week&apos;s Activity:</span>
-            <div className="grid grid-cols-7 gap-2 text-center">
-              {weekDays.map((d, i) => (
-                <div key={i} className="flex flex-col items-center gap-1.5">
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-amber-50 border border-amber-300 text-amber-700 flex items-center justify-center font-bold text-xs shadow-2xs">
-                    ✓
-                  </div>
-                  <span className="text-[11px] font-bold text-[#64748B]">{d.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
-            <span className="font-medium">Complete one quiz today to keep your streak alive!</span>
-            <span className="font-bold text-amber-700">12h left</span>
-          </div>
-
-          {/* Streak Milestones */}
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
-              Streak Milestones
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { label: '3 Days', achieved: true },
-                { label: '7 Days', achieved: true },
-                { label: '14 Days', achieved: false },
-                { label: '30 Days', achieved: false },
-                { label: '100 Days', achieved: false },
-              ].map((m) => (
-                <span
-                  key={m.label}
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border ${
-                    m.achieved
-                      ? 'bg-amber-100 text-amber-900 border-amber-300'
-                      : 'bg-[#F8FAFC] text-[#94A3B8] border-[#E2E8F0]'
-                  }`}
-                >
-                  🔥 {m.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Module 4: Daily Goals Tracker */}
-        <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                Daily Habit Tracker
-              </span>
-              <h3 className="text-xl font-black text-[#0F172A] flex items-center gap-2">
-                <Target className="w-5 h-5 text-[#2563EB]" />
-                <span>Today&apos;s Goals</span>
-              </h3>
-            </div>
-            <span className="text-xs font-mono font-bold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
-              {completedGoalsCount} of {dailyGoals.length} Completed
-            </span>
-          </div>
-
-          {/* Checklist */}
-          <div className="space-y-2.5">
-            {dailyGoals.map((g) => (
-              <div
-                key={g.id}
-                onClick={() => toggleGoal(g.id)}
-                className={`p-3 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer ${
-                  g.completed
-                    ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1]'
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-lg border flex items-center justify-center text-xs font-bold transition-colors ${
-                    g.completed
-                      ? 'bg-emerald-500 border-emerald-500 text-white'
-                      : 'border-[#CBD5E1] bg-white'
-                  }`}
-                >
-                  {g.completed && '✓'}
-                </div>
-                <span className={`text-xs font-semibold ${g.completed ? 'line-through text-slate-500' : ''}`}>
-                  {g.text}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Progress bar */}
-          <div className="space-y-1.5 pt-2">
-            <div className="flex justify-between text-xs font-bold">
-              <span className="text-[#64748B]">Goal Progress</span>
-              <span className="text-[#2563EB] font-mono">{goalsProgressPercent}%</span>
-            </div>
-            <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[#2563EB] transition-all duration-300"
-                style={{ width: `${goalsProgressPercent}%` }}
-              />
-            </div>
-            <span className="text-[11px] text-[#64748B] block mt-1">
-              Complete your final goal to claim +100 bonus XP today!
-            </span>
-          </div>
-        </Card>
-      </div>
-
-      {/* ================================================================= */}
-      {/* 7. WEAK TOPICS & ADAPTIVE REMEDIATION */}
-      {/* ================================================================= */}
-      <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 sm:p-7 rounded-3xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 uppercase tracking-wider">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Targeted Remediation</span>
-            </div>
-            <h2 className="text-xl font-extrabold text-[#0F172A] tracking-tight">
-              Your Topic Mastery Breakdown
-            </h2>
-            <p className="text-xs text-[#64748B]">
-              Quizora pinpoints your exact weakness so you don&apos;t waste time repeating what you already know.
-            </p>
-          </div>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onGenerateWeakPractice?.(['dsa', 'node.js'])}
-            disabled={isGeneratingWeakPractice}
-            className="text-xs gap-1.5 bg-rose-600 hover:bg-rose-700 text-white self-start sm:self-auto cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isGeneratingWeakPractice ? 'Synthesizing...' : '⚡ Generate Practice Quiz →'}</span>
-          </Button>
-        </div>
-
-        {/* Topic Bars */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {weakTopics.map((t) => (
-            <div
-              key={t.topic}
-              className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2 hover:border-[#CBD5E1] transition-all"
-            >
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-extrabold text-[#0F172A]">{t.topic}</span>
-                <span className={`font-mono font-bold ${t.color}`}>{t.accuracy}% &bull; {t.status}</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${t.bg}`}
-                  style={{ width: `${t.accuracy}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-900">
-          <div>
-            <strong>Recommendation:</strong> You should practice <strong>DSA (Graphs &amp; Recursion)</strong> next to boost your overall accuracy.
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onGenerateWeakPractice?.(['dsa'])}
-            className="text-xs border-rose-300 text-rose-700 hover:bg-rose-100 shrink-0 cursor-pointer"
-          >
-            Start DSA Drill &rarr;
-          </Button>
-        </div>
-      </Card>
-
-      {/* ================================================================= */}
-      {/* 8. PROGRESS ANALYTICS & 9. WEEKLY LEADERBOARD (TWO-COLUMN) */}
+            {/* ================================================================= */}
+      {/* 4. DAILY GOALS & 8. PROGRESS ANALYTICS (TWO-COLUMN) */}
       {/* ================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Module 8: Progress Analytics */}
-        <Card className="lg:col-span-2 bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
-            <div>
-              <h3 className="font-extrabold text-[#0F172A] text-base flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#2563EB]" />
-                <span>Your Progress &amp; Accuracy Trend</span>
-              </h3>
-              <p className="text-xs text-[#64748B]">Weekly accuracy progression across Fall 2026</p>
-            </div>
+        <div className="lg:col-span-2 relative p-6 rounded-3xl border border-white/60 shadow-xl overflow-hidden space-y-5 h-full group flex flex-col">
+          {/* Animated Background Orbs */}
+          <div className="absolute top-[20%] left-[-10%] w-[50%] h-[80%] bg-blue-100/50 rounded-full mix-blend-multiply filter blur-[50px] animate-blob" />
+          <div className="absolute top-[-10%] right-[10%] w-[40%] h-[70%] bg-purple-100/50 rounded-full mix-blend-multiply filter blur-[50px] animate-blob animation-delay-4000" />
+          
+          {/* Glassmorphism Surface */}
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl" />
+          
+          <div className="relative z-10 flex-1 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/60">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-600" />
+                  <span>Your Progress &amp; Accuracy Trend</span>
+                </h3>
+                <p className="text-xs text-slate-600">Weekly accuracy progression across Fall 2026</p>
+              </div>
 
             {/* Week selector pills */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs self-start sm:self-auto">
@@ -714,229 +754,114 @@ export default function StudentOverview({
               <span className="font-bold text-[#2563EB] font-mono text-sm">87%</span>
             </div>
           </div>
-        </Card>
-
-        {/* Module 9: Weekly Leaderboard */}
-        <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-            <div>
-              <h3 className="font-extrabold text-[#0F172A] text-base flex items-center gap-1.5">
-                <Trophy className="w-4 h-4 text-amber-500" />
-                <span>Weekly Leaderboard</span>
-              </h3>
-              <p className="text-[11px] text-[#64748B]">Updated real-time from Redis</p>
             </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('leaderboard')}
-              className="text-xs font-semibold text-[#2563EB] hover:underline"
-            >
-              View All &rarr;
-            </button>
           </div>
 
-          {/* Standings table */}
-          <div className="space-y-2">
-            {weeklyLeaderboard.map((item) => (
-              <div
-                key={item.rank}
-                className={`p-2.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                  item.isMe
-                    ? 'bg-blue-50/70 border-[#2563EB] ring-1 ring-[#2563EB]/30'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-mono font-bold text-xs w-5 text-center">
-                    {item.medal}
-                  </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.avatar}
-                    alt={item.name}
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0]"
-                  />
-                  <span className="font-bold text-xs text-[#0F172A] truncate">
-                    {item.name} {item.isMe && <span className="text-[#2563EB]">(You)</span>}
-                  </span>
-                </div>
+        <div className="lg:col-span-1 h-full">
+          {/* Module 4: Daily Goals Tracker */}
+                  <div className="relative p-6 rounded-3xl border border-white/60 shadow-xl overflow-hidden space-y-5 h-full group flex flex-col">
+                    {/* Animated Background Orbs */}
+                    <div className="absolute top-[40%] right-[-10%] w-[60%] h-[50%] bg-amber-100/50 rounded-full mix-blend-multiply filter blur-[50px] animate-blob animation-delay-2000" />
+                    
+                    {/* Glassmorphism Surface */}
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl" />
+                    
+                    <div className="relative z-10 flex-1 space-y-5">
+                      <div className="flex items-center justify-between pb-3 border-b border-white/60">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                            Daily Habit Tracker
+                          </span>
+                          <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <Target className="w-5 h-5 text-blue-600" />
+                            <span>Today&apos;s Goals</span>
+                          </h3>
+                        </div>
+                      <span className="text-xs font-mono font-bold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
+                        {completedGoalsCount} of {dailyGoals.length} Completed
+                      </span>
+                    </div>
+          
+                    {/* Checklist */}
+                    <div className="space-y-2.5">
+                      {dailyGoals.map((g) => (
+                        <div
+                          key={g.id}
+                          onClick={() => toggleGoal(g.id)}
+                          className={`group p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                            g.completed
+                              ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
+                              : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-5 h-5 rounded-lg border flex items-center justify-center text-xs font-bold transition-colors ${
+                                g.completed
+                                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                                  : 'border-[#CBD5E1] bg-white'
+                              }`}
+                            >
+                              {g.completed && '✓'}
+                            </div>
+                            <span className={`text-xs font-semibold ${g.completed ? 'line-through text-slate-500' : ''}`}>
+                              {g.text}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => removeGoal(e, g.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
 
-                <div className="text-right shrink-0">
-                  <span className="font-extrabold text-xs font-mono text-[#2563EB] block">
-                    {item.xp} XP
-                  </span>
-                  <span className="text-[10px] font-mono text-emerald-600 block">
-                    {item.score}%
-                  </span>
-                </div>
+                    {/* Add Goal Form */}
+                    <form onSubmit={addGoal} className="mt-2 flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newGoalText}
+                        onChange={(e) => setNewGoalText(e.target.value)}
+                        placeholder="Add new goal..."
+                        className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] placeholder:text-slate-400"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newGoalText.trim()}
+                        className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 hover:border-blue-200 disabled:opacity-50 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </form>
+          
+                    {/* Progress bar */}
+                    <div className="space-y-1.5 pt-2">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-[#64748B]">Goal Progress</span>
+                        <span className="text-[#2563EB] font-mono">{goalsProgressPercent}%</span>
+                      </div>
+                      <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#2563EB] transition-all duration-300"
+                          style={{ width: `${goalsProgressPercent}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-[#64748B] block mt-1">
+                        Complete your final goal to claim +100 bonus XP today!
+                      </span>
+                    </div>
+                    </div>
+                  </div>
+        </div>
+
               </div>
-            ))}
-          </div>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onNavigateTab('leaderboard')}
-            className="w-full text-xs gap-1 border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-            <span>View Full Leaderboard &rarr;</span>
-          </Button>
-        </Card>
-      </div>
 
-      {/* ================================================================= */}
-      {/* 10. XP & LEVELS GAMIFICATION & 11. ACHIEVEMENTS (TWO-COLUMN) */}
-      {/* ================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Module 10: XP & Levels */}
-        <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                Rank Progression
-              </span>
-              <h3 className="text-lg font-black text-[#0F172A] flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500 fill-amber-400" />
-                <span>Level 12 &bull; Quiz Explorer</span>
-              </h3>
-            </div>
-            <span className="text-xs font-mono font-bold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
-              {summary.totalXpEarned} / 1,500 XP
-            </span>
-          </div>
 
-          <div className="space-y-1.5">
-            <div className="w-full h-3 rounded-full bg-[#E2E8F0] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#38BDF8]"
-                style={{ width: `${(1240 / 1500) * 100}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11px] text-[#64748B]">
-              <span>260 XP until Level 13 (Code Champion)</span>
-              <span>82%</span>
-            </div>
-          </div>
 
-          <div className="pt-2 border-t border-[#E2E8F0] text-xs text-[#64748B] space-y-1">
-            <span className="font-bold text-[#0F172A] block text-[11px] uppercase tracking-wider">
-              Earn XP By:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <span>&bull; Completing quizzes (+50 XP)</span>
-              <span>&bull; Perfect scores (+100 XP)</span>
-              <span>&bull; Maintaining streaks (+25 XP)</span>
-              <span>&bull; Weak-topic mastery (+75 XP)</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Module 11: Achievements Showcase */}
-        <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                Hall of Badges
-              </span>
-              <h3 className="text-lg font-black text-[#0F172A] flex items-center gap-2">
-                <Award className="w-5 h-5 text-[#2563EB]" />
-                <span>Achievements (4/6 Unlocked)</span>
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('achievements')}
-              className="text-xs font-semibold text-[#2563EB] hover:underline"
-            >
-              All Badges &rarr;
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2.5">
-            {achievements.map((ach) => (
-              <div
-                key={ach.name}
-                className={`p-3 rounded-2xl border text-center transition-all ${
-                  ach.unlocked
-                    ? 'bg-amber-50/50 border-amber-200 text-amber-900 shadow-2xs'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#94A3B8] opacity-60'
-                }`}
-              >
-                <div className="text-2xl mb-1">{ach.icon}</div>
-                <span className="font-bold text-[11px] block truncate">{ach.name}</span>
-                <span className="text-[9px] uppercase font-mono mt-0.5 block">
-                  {ach.unlocked ? 'Unlocked ✓' : 'Locked 🔒'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* ================================================================= */}
-      {/* 17. PDF → QUIZ & 18. CHALLENGE FRIENDS (TWO-COLUMN) */}
-      {/* ================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Module 17: Turn Notes into a Quiz */}
-        <Card className="bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/60 border border-indigo-200 p-6 rounded-3xl space-y-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-[#0F172A] text-base">
-                📄 Turn your notes into a quiz
-              </h3>
-              <p className="text-xs text-[#64748B]">
-                Upload your lecture PDF or class notes and let Quizora AI generate questions for you.
-              </p>
-            </div>
-          </div>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => router.push('/quizzes/upload')}
-            className="w-full text-xs gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white cursor-pointer"
-          >
-            <UploadCloud className="w-4 h-4" />
-            <span>Upload PDF &rarr;</span>
-          </Button>
-        </Card>
-
-        {/* Module 18: Challenge Friends */}
-        <Card className="bg-gradient-to-br from-purple-50/70 via-white to-pink-50/60 border border-purple-200 p-6 rounded-3xl space-y-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center">
-              <Share2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-[#0F172A] text-base">
-                🎮 Challenge a Friend
-              </h3>
-              <p className="text-xs text-[#64748B]">
-                Create a quiz &rarr; Share code &rarr; Compete for highest score on the leaderboard.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1 p-2.5 rounded-xl bg-white border border-[#E2E8F0] font-mono font-bold text-center text-xs text-[#0F172A]">
-              QZ-82FA
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleCopyChallenge}
-              className="text-xs gap-1 border-[#E2E8F0] text-[#2563EB] cursor-pointer"
-            >
-              {copiedChallenge ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedChallenge ? 'Copied!' : 'Copy Link'}</span>
-            </Button>
-          </div>
-        </Card>
-      </div>
 
       {/* ================================================================= */}
       {/* 13. SAVED QUIZZES & 14. RECENT ACTIVITY (TWO-COLUMN) */}
@@ -1040,6 +965,62 @@ export default function StudentOverview({
           <span>Ask Quizora AI</span>
         </Button>
       </Card>
+      {/* Quick Start Modal */}
+      {showQuickStartModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-[#0F172A] mb-2">Practice {recentQuiz?.topic}</h3>
+            <p className="text-sm text-[#64748B] mb-6">Customize your next session.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-[#0F172A] block mb-1">Number of Questions</label>
+                <select
+                  value={qsQuestions}
+                  onChange={(e) => setQsQuestions(e.target.value)}
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                >
+                  <option value={5}>5 Questions</option>
+                  <option value={10}>10 Questions</option>
+                  <option value={20}>20 Questions</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#0F172A] block mb-1">Time Limit (Minutes)</label>
+                <select
+                  value={qsTimeLimit}
+                  onChange={(e) => setQsTimeLimit(e.target.value)}
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                >
+                  <option value={3}>3 Minutes</option>
+                  <option value={5}>5 Minutes</option>
+                  <option value={10}>10 Minutes</option>
+                  <option value={20}>20 Minutes</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setShowQuickStartModal(false)}
+                disabled={isQuickStarting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8]"
+                onClick={handleQuickStart}
+                disabled={isQuickStarting}
+              >
+                {isQuickStarting ? 'Building...' : 'Start Practice'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

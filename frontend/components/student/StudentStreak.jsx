@@ -16,6 +16,9 @@ import Button from '@/components/ui/Button';
 
 export default function StudentStreak({ streak = 7 }) {
   const [freezeTokens, setFreezeTokens] = useState(2);
+  const [selectedYear, setSelectedYear] = useState('2026');
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const days = [
     { name: 'Monday', date: 'Sep 15', completed: true },
@@ -34,6 +37,44 @@ export default function StudentStreak({ streak = 7 }) {
     { days: 30, label: 'Monthly Master', unlocked: false, xp: 1000 },
     { days: 100, label: 'Unstoppable Legend', unlocked: false, xp: 5000 },
   ];
+
+  // Generate mock heatmap data for a full 52-week year
+  const heatmapData = React.useMemo(() => {
+    const data = [];
+    for (let w = 0; w < 52; w++) { // 52 columns (weeks)
+      const week = [];
+      for (let d = 0; d < 7; d++) { // 7 rows (days)
+        let level = 0;
+        const rand = Math.random();
+        if (rand > 0.9) level = 4;
+        else if (rand > 0.75) level = 3;
+        else if (rand > 0.6) level = 2;
+        else if (rand > 0.4) level = 1;
+        
+        if (selectedYear === '2026') {
+          // Guarantee current streak shows activity at the end of the year
+          if (w >= 50 && d < streak) level = Math.max(level, 2);
+        } else {
+          // Mock lower activity for past years
+          if (Math.random() > 0.4) level = 0;
+        }
+        
+        week.push(level);
+      }
+      data.push(week);
+    }
+    return data;
+  }, [streak, selectedYear]);
+
+  const getHeatmapColor = (level) => {
+    switch(level) {
+      case 1: return 'bg-amber-200';
+      case 2: return 'bg-amber-300';
+      case 3: return 'bg-amber-500';
+      case 4: return 'bg-amber-600';
+      default: return 'bg-slate-100';
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -71,6 +112,74 @@ export default function StudentStreak({ streak = 7 }) {
               <span className="text-[10px] text-slate-500 block">{d.date}</span>
             </div>
           ))}
+        </div>
+      </Card>
+
+      {/* Activity Heatmap */}
+      <Card className="bg-white border-[#E2E8F0] shadow-sm p-6 rounded-3xl space-y-4 overflow-x-auto">
+        <div className="flex items-center justify-between min-w-max">
+          <h3 className="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#2563EB]" />
+            Learning Activity Heatmap
+          </h3>
+          <select 
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
+          >
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+        </div>
+        
+        <div className="min-w-max space-y-2 pt-2">
+          {/* Months Row */}
+          <div className="flex text-[10px] font-bold text-slate-400 pl-[30px]">
+            {months.map((month) => (
+              <div key={month} className="flex-1 min-w-[34px]">{month}</div>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            {/* Days Column */}
+            <div className="flex flex-col gap-[7px] text-[9px] font-bold text-slate-400 pt-1 justify-between pb-1">
+              <span>Mon</span>
+              <span className="opacity-0">Tue</span>
+              <span>Wed</span>
+              <span className="opacity-0">Thu</span>
+              <span>Fri</span>
+              <span className="opacity-0">Sat</span>
+              <span>Sun</span>
+            </div>
+            
+            {/* Grid */}
+            <div className="flex gap-1.5">
+              {heatmapData.map((week, i) => (
+                <div key={i} className="flex flex-col gap-1.5">
+                  {week.map((level, j) => (
+                    <div 
+                      key={j} 
+                      className={`w-3.5 h-3.5 rounded-[3px] transition-colors ${getHeatmapColor(level)}`} 
+                      title={`Activity level: ${level}`} 
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 text-[10px] text-slate-500 font-bold pt-4 min-w-max">
+          <span>Less</span>
+          <div className="flex gap-1.5">
+            <div className="w-3.5 h-3.5 rounded-[3px] bg-slate-100" />
+            <div className="w-3.5 h-3.5 rounded-[3px] bg-amber-200" />
+            <div className="w-3.5 h-3.5 rounded-[3px] bg-amber-300" />
+            <div className="w-3.5 h-3.5 rounded-[3px] bg-amber-500" />
+            <div className="w-3.5 h-3.5 rounded-[3px] bg-amber-600" />
+          </div>
+          <span>More</span>
         </div>
       </Card>
 
