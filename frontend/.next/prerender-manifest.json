@@ -5,7 +5,7 @@
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 75763,
+      "htmlSize": 66013,
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -62,7 +62,7 @@
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 19093,
+      "htmlSize": 15492,
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -90,7 +90,7 @@
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 19468,
+      "htmlSize": 16068,
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -178,39 +178,11 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/leaderboard": {
-      "routeType": "page",
-      "response": "complete",
-      "compute": "static",
-      "htmlSize": 27157,
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/leaderboard",
-      "dataRoute": "/leaderboard.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/login": {
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 24728,
+      "htmlSize": 20908,
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -234,123 +206,11 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/quizzes": {
-      "routeType": "page",
-      "response": "complete",
-      "compute": "static",
-      "htmlSize": 33878,
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/quizzes",
-      "dataRoute": "/quizzes.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/quizzes/create": {
-      "routeType": "page",
-      "response": "complete",
-      "compute": "static",
-      "htmlSize": 19925,
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/quizzes/create",
-      "dataRoute": "/quizzes/create.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/quizzes/generate": {
-      "routeType": "page",
-      "response": "complete",
-      "compute": "static",
-      "htmlSize": 19932,
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/quizzes/generate",
-      "dataRoute": "/quizzes/generate.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/quizzes/upload": {
-      "routeType": "page",
-      "response": "complete",
-      "compute": "static",
-      "htmlSize": 19925,
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/quizzes/upload",
-      "dataRoute": "/quizzes/upload.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/register": {
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 26098,
+      "htmlSize": 20608,
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -378,8 +238,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "4c99bf89e3ebd9220e811639058f2888",
-    "previewModeSigningKey": "18e6e87a1cd4f9928133a1c4a2e256071b673a96291dedbaa725a8d38e24ffe2",
-    "previewModeEncryptionKey": "e5e8f0532a43e2846bc7c33794e9b3f9a221f09bb93ffa2f6b900409e53c1adb"
+    "previewModeId": "5b061f2a7c88d06ade97af735eb30312",
+    "previewModeSigningKey": "3d7ec2c9063081e6fbeb2c6ae4e0238021655477696409a5e8e44cb6e721fc2d",
+    "previewModeEncryptionKey": "eee70b1c8723feb7143e1110a90a4885611ae4f7675b2af8e7f67e973d884497"
   }
 }

@@ -4,14 +4,10 @@
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/icon.png/route": "app/icon.png/route.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/leaderboard/page": "app/leaderboard/page.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js",
+  "/quizzes/[id]/leaderboard/page": "app/quizzes/[id]/leaderboard/page.js",
   "/quizzes/[id]/page": "app/quizzes/[id]/page.js",
   "/quizzes/[id]/play/page": "app/quizzes/[id]/play/page.js",
-  "/quizzes/create/page": "app/quizzes/create/page.js",
-  "/quizzes/generate/page": "app/quizzes/generate/page.js",
-  "/quizzes/page": "app/quizzes/page.js",
-  "/register/page": "app/register/page.js",
-  "/quizzes/upload/page": "app/quizzes/upload/page.js"
+  "/register/page": "app/register/page.js"
 }

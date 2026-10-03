@@ -4,14 +4,10 @@
   "/favicon.ico/route": "/favicon.ico",
   "/icon.png/route": "/icon.png",
   "/dashboard/page": "/dashboard",
-  "/leaderboard/page": "/leaderboard",
   "/login/page": "/login",
   "/page": "/",
+  "/quizzes/[id]/leaderboard/page": "/quizzes/[id]/leaderboard",
   "/quizzes/[id]/page": "/quizzes/[id]",
   "/quizzes/[id]/play/page": "/quizzes/[id]/play",
-  "/quizzes/create/page": "/quizzes/create",
-  "/quizzes/generate/page": "/quizzes/generate",
-  "/quizzes/page": "/quizzes",
-  "/register/page": "/register",
-  "/quizzes/upload/page": "/quizzes/upload"
+  "/register/page": "/register"
 }

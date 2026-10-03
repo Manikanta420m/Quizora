@@ -31,6 +31,14 @@
       "namedRegex": "^/quizzes/(?<nxtPid>[^/]+?)(?:/)?$"
     },
     {
+      "page": "/quizzes/[id]/leaderboard",
+      "regex": "^/quizzes/([^/]+?)/leaderboard(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/quizzes/(?<nxtPid>[^/]+?)/leaderboard(?:/)?$"
+    },
+    {
       "page": "/quizzes/[id]/play",
       "regex": "^/quizzes/([^/]+?)/play(?:/)?$",
       "routeKeys": {
@@ -77,40 +85,10 @@
       "namedRegex": "^/icon\\.png(?:/)?$"
     },
     {
-      "page": "/leaderboard",
-      "regex": "^/leaderboard(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/leaderboard(?:/)?$"
-    },
-    {
       "page": "/login",
       "regex": "^/login(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/login(?:/)?$"
-    },
-    {
-      "page": "/quizzes",
-      "regex": "^/quizzes(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/quizzes(?:/)?$"
-    },
-    {
-      "page": "/quizzes/create",
-      "regex": "^/quizzes/create(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/quizzes/create(?:/)?$"
-    },
-    {
-      "page": "/quizzes/generate",
-      "regex": "^/quizzes/generate(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/quizzes/generate(?:/)?$"
-    },
-    {
-      "page": "/quizzes/upload",
-      "regex": "^/quizzes/upload(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/quizzes/upload(?:/)?$"
     },
     {
       "page": "/register",
