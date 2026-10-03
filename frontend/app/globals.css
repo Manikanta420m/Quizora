@@ -67,6 +67,9 @@ html.dark body,
     radial-gradient(ellipse at 80% 5%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 20% 95%, rgba(37, 99, 235, 0.10) 0%, transparent 50%),
     url('/images/page-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center top !important;
+  background-attachment: fixed !important;
   color: #F8FAFC !important;
 }
 
@@ -239,6 +242,17 @@ html.dark body,
   background-attachment: fixed;
 }
 
+.dark .bg-page-light {
+  background-color: #0B0F19 !important;
+  background-image: 
+    radial-gradient(ellipse at 85% 5%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 95%, rgba(37, 99, 235, 0.10) 0%, transparent 50%),
+    url('/images/page-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center top !important;
+  background-attachment: fixed !important;
+}
+
 .bg-hero-light {
   background-color: #F8FAFC;
   background-image: 
@@ -247,6 +261,16 @@ html.dark body,
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.dark .bg-hero-light {
+  background-color: #0B0F19 !important;
+  background-image: 
+    radial-gradient(ellipse at 50% 20%, rgba(15, 23, 42, 0.6) 0%, rgba(11, 15, 25, 0.85) 100%),
+    url('/images/hero-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
 
 .bg-auth-light {
@@ -259,6 +283,16 @@ html.dark body,
   background-repeat: no-repeat;
 }
 
+.dark .bg-auth-light {
+  background-color: #0B0F19 !important;
+  background-image: 
+    radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.75) 0%, rgba(11, 15, 25, 0.92) 100%),
+    url('/images/auth-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
 .bg-pattern-light {
   background-color: #F8FAFC;
   background-image: url('/images/ambient-pattern.jpg');
@@ -267,12 +301,20 @@ html.dark body,
   background-repeat: no-repeat;
 }
 
+.dark .bg-pattern-light {
+  background-color: #0B0F19 !important;
+  background-image: url('/images/ambient-pattern.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
 /* 3D Flip Card Styles */
 .perspective-1000 {
   perspective: 1000px;
 }
 
-.transform-style-3d {
+.transform-style-3d, .preserve-3d {
   transform-style: preserve-3d;
 }
 
@@ -286,6 +328,25 @@ html.dark body,
 }
 
 /* Print Media Query */
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
 @media print {
   header, footer, nav, button, .no-print {
     display: none !important;

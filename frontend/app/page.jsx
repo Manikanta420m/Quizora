@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import HeroRobot from '@/components/HeroRobot';
+import LeaderboardSection from '@/components/LeaderboardSection';
 import {
   Brain,
   Sparkles,
@@ -79,13 +81,11 @@ export default function HomePage() {
     progress: '3/10',
     prompt: 'What does Array.map() return?',
     options: [
-      { id: 'A', text: 'The original array', correct: false },
-      { id: 'B', text: 'A new array', correct: true },
-      { id: 'C', text: 'An object', correct: false },
-      { id: 'D', text: 'A string', correct: false },
+      { id: 'A', text: 'The original array', correct: false, feedback: 'map() does not modify the original array; it leaves it completely unchanged.' },
+      { id: 'B', text: 'A new array', correct: true, feedback: 'Array.map() creates a new array by applying a function to every element of the original array.' },
+      { id: 'C', text: 'An object', correct: false, feedback: 'While arrays are technically objects in JS, map() specifically returns a new array instance, not a generic object.' },
+      { id: 'D', text: 'A string', correct: false, feedback: 'map() returns a new array. To get a string, you would use methods like join().' },
     ],
-    explanation:
-      'Array.map() creates a new array by applying a function to every element of the original array.',
     tip: 'Use map() when you want to transform each element of an array.',
   };
 
@@ -168,17 +168,12 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-transparent text-[#111827] selection:bg-[#2563EB]/25">
       <Navbar />
 
-      <main className="flex-1 space-y-24 pb-20">
+      <main className="flex-1 space-y-16 lg:space-y-20 pb-20">
         {/* ================================================================= */}
         {/* HERO SECTION ⭐ */}
         {/* ================================================================= */}
-        <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8">
-          {/* Subtle Ambient Background Gradients & Light Hero Image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-80 pointer-events-none -z-10 [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_95%)]"
-            style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
-            aria-hidden="true"
-          />
+        <section className="relative overflow-hidden pt-10 sm:pt-16 pb-0 lg:pb-2 px-4 sm:px-6 lg:px-8">
+
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[400px] bg-gradient-to-tr from-[#2563EB]/10 via-[#38BDF8]/10 to-[#2563EB]/5 blur-[130px] -z-10 pointer-events-none rounded-full" />
 
           <div className="max-w-7xl mx-auto">
@@ -201,8 +196,7 @@ export default function HomePage() {
 
                 {/* Supporting text */}
                 <p className="text-base sm:text-lg text-[#64748B] leading-relaxed max-w-xl font-normal">
-                  Generate personalized quizzes from any topic, notes, or PDF. Choose your difficulty
-                  and test your knowledge in seconds.
+                  Transform your study materials into an engaging gamified experience. Generate personalized quizzes, study flashcards, and detailed analytics from any topic, raw notes, or PDF document. Choose your difficulty to test your knowledge instantly, challenge a friend head-to-head on the live leaderboard, or create a private multiplayer quiz room to learn together in real-time.
                 </p>
 
                 {/* Buttons: [ Generate Quiz → ] [ Explore Features ] */}
@@ -237,201 +231,8 @@ export default function HomePage() {
 
               {/* Right Side: Quizora Robot Showcase */}
               <div className="lg:col-span-5 flex justify-center lg:justify-end">
-                <div className="relative w-full max-w-[420px]">
-                  {/* Ambient Glow */}
-                  <div className="absolute -inset-2 bg-gradient-to-tr from-[#2563EB]/20 via-[#38BDF8]/20 to-[#2563EB]/10 rounded-3xl blur-2xl -z-10 pointer-events-none" />
-
-                  {/* Robot Card Container */}
-                  <div className="relative rounded-3xl bg-white border border-[#E2E8F0] p-6 sm:p-8 shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300">
-                    {/* Floating Badge */}
-                    <div className="absolute -top-3 -right-2 px-3 py-1.5 rounded-xl bg-white/95 backdrop-blur-md border border-blue-100 shadow-md flex items-center gap-1.5 text-xs font-bold text-[#0F172A]">
-                      <Zap className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>Ready in 3s</span>
-                    </div>
-
-                    {/* Robot Artwork */}
-                    <div className="relative flex items-center justify-center p-2">
-                      <img
-                        src="/images/quizora-robot.png"
-                        alt="Quizora AI Robot"
-                        className="w-full h-auto max-h-[320px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-md"
-                      />
-                    </div>
-
-                    {/* Bottom Status Bar */}
-                    <div className="pt-4 flex items-center justify-between gap-2 border-t border-[#E2E8F0]/80">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0F172A]">
-                        <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-                        <span>AI Tutor Active</span>
-                      </div>
-                      <div className="text-[11px] font-mono text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                        Quizora 3D Mascot
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <HeroRobot />
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ================================================================= */}
-        {/* 3. QUICK QUIZ GENERATOR ⭐⭐⭐ */}
-        {/* ================================================================= */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center space-y-2 mb-6">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-              Generate your quiz
-            </h2>
-            <p className="text-sm text-[#64748B]">
-              Experience the product immediately without navigating away.
-            </p>
-          </div>
-
-          <form
-            onSubmit={handleQuickGenerate}
-            className="rounded-3xl bg-white border border-[#E2E8F0] p-6 sm:p-8 shadow-xl shadow-slate-200/40 space-y-6 relative overflow-hidden"
-          >
-            <div className="space-y-2">
-              <label htmlFor="quick-topic" className="block text-sm font-bold text-[#0F172A]">
-                What do you want to learn?
-              </label>
-              <input
-                id="quick-topic"
-                type="text"
-                value={quickTopic}
-                onChange={(e) => setQuickTopic(e.target.value)}
-                placeholder="e.g. JavaScript, Python, Photosynthesis"
-                className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-base text-[#0F172A] font-medium focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Difficulty */}
-              <div className="space-y-1.5">
-                <label htmlFor="quick-difficulty" className="block text-xs font-semibold text-[#64748B]">
-                  Difficulty
-                </label>
-                <div className="relative">
-                  <select
-                    id="quick-difficulty"
-                    value={quickDifficulty}
-                    onChange={(e) => setQuickDifficulty(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-semibold text-[#0F172A] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all outline-none pr-8 cursor-pointer"
-                  >
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Questions */}
-              <div className="space-y-1.5">
-                <label htmlFor="quick-count" className="block text-xs font-semibold text-[#64748B]">
-                  Questions
-                </label>
-                <div className="relative">
-                  <select
-                    id="quick-count"
-                    value={quickQuestions}
-                    onChange={(e) => setQuickQuestions(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-semibold text-[#0F172A] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all outline-none pr-8 cursor-pointer"
-                  >
-                    <option value="5">5 Questions</option>
-                    <option value="10">10 Questions</option>
-                    <option value="15">15 Questions</option>
-                    <option value="20">20 Questions</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Question Type */}
-              <div className="space-y-1.5">
-                <label htmlFor="quick-type" className="block text-xs font-semibold text-[#64748B]">
-                  Question Type
-                </label>
-                <div className="relative">
-                  <select
-                    id="quick-type"
-                    value={quickType}
-                    onChange={(e) => setQuickType(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-semibold text-[#0F172A] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all outline-none pr-8 cursor-pointer"
-                  >
-                    <option value="MCQ">MCQ (Multiple Choice)</option>
-                    <option value="True/False">True / False</option>
-                    <option value="Mixed">Mixed Formats</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-center">
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full sm:w-auto gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-10 py-3.5 rounded-xl shadow-md shadow-blue-500/20 text-base transition-all hover:scale-[1.02]"
-              >
-                <span>Generate Quiz</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </form>
-        </section>
-
-        {/* ================================================================= */}
-        {/* 4. STATS SECTION (PRODUCT CAPABILITIES) */}
-        {/* ================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 rounded-2xl bg-white border-[#E2E8F0] text-center space-y-3 shadow-xs hover:border-[#2563EB]/40 transition-all">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                <Zap className="w-6 h-6 text-[#38BDF8]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#0F172A]">AI Powered</h3>
-              <p className="text-xs sm:text-sm text-[#64748B]">
-                Dual-engine intelligence using Google Gemini 1.5 Flash paired with instant procedural heuristics.
-              </p>
-            </Card>
-
-            <Card className="p-6 rounded-2xl bg-white border-[#E2E8F0] text-center space-y-3 shadow-xs hover:border-[#2563EB]/40 transition-all">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                <FileText className="w-6 h-6 text-[#2563EB]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#0F172A]">Multiple Formats</h3>
-              <p className="text-xs sm:text-sm text-[#64748B]">
-                Topic prompts, lecture notes, textbook chapters, or raw PDFs parsed effortlessly.
-              </p>
-            </Card>
-
-            <Card className="p-6 rounded-2xl bg-white border-[#E2E8F0] text-center space-y-3 shadow-xs hover:border-[#2563EB]/40 transition-all">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-emerald-500" />
-              </div>
-              <h3 className="text-xl font-bold text-[#0F172A]">Instant Results</h3>
-              <p className="text-xs sm:text-sm text-[#64748B]">
-                Immediate score evaluation, pedagogical rationales, and live distractor analysis.
-              </p>
-            </Card>
-          </div>
-
-          {/* Architecture Benchmark Strip */}
-          <div className="grid grid-cols-3 gap-4 pt-10 mt-10 border-t border-[#E2E8F0] text-center max-w-2xl mx-auto">
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#0F172A] font-mono">10K+</div>
-              <div className="text-xs text-[#64748B] mt-0.5">Quizzes Generated</div>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#2563EB] font-mono">5K+</div>
-              <div className="text-xs text-[#64748B] mt-0.5">Active Learners</div>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#38BDF8] font-mono">50+</div>
-              <div className="text-xs text-[#64748B] mt-0.5">Curated Topics</div>
             </div>
           </div>
         </section>
@@ -439,7 +240,7 @@ export default function HomePage() {
         {/* ================================================================= */}
         {/* 5. FEATURES SECTION */}
         {/* ================================================================= */}
-        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24 !mt-0 lg:!mt-0">
           <div className="text-center space-y-3 max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
               Everything You Need to Learn Smarter
@@ -483,7 +284,40 @@ export default function HomePage() {
               </p>
             </Card>
 
-            {/* Card 4 */}
+            {/* Card 4 (Formerly 7) */}
+            <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
+                🗂️
+              </div>
+              <h3 className="text-lg font-bold text-[#0F172A]">Flashcard Generation</h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Automatically generate study flashcards from your notes for active recall.
+              </p>
+            </Card>
+
+            {/* Card 5 (Formerly 8) */}
+            <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
+                ⚔️
+              </div>
+              <h3 className="text-lg font-bold text-[#0F172A]">Challenge a Friend</h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Share your quiz link and compete head-to-head on the live leaderboard.
+              </p>
+            </Card>
+
+            {/* Card 6 (Formerly 9) */}
+            <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
+                🎮
+              </div>
+              <h3 className="text-lg font-bold text-[#0F172A]">Create a Quiz Room</h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Host live multiplayer quiz sessions with friends in real-time.
+              </p>
+            </Card>
+
+            {/* Card 7 (Formerly 4) */}
             <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
                 ⚡
@@ -494,7 +328,7 @@ export default function HomePage() {
               </p>
             </Card>
 
-            {/* Card 5 */}
+            {/* Card 8 (Formerly 5) */}
             <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
                 📊
@@ -505,7 +339,7 @@ export default function HomePage() {
               </p>
             </Card>
 
-            {/* Card 6 */}
+            {/* Card 9 (Formerly 6) */}
             <Card className="p-6 bg-white border-[#E2E8F0] hover:border-[#2563EB]/40 hover:shadow-lg transition-all rounded-2xl space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center text-xl">
                 🔄
@@ -608,45 +442,7 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Supported & Roadmap Input Formats */}
-            <div className="pt-6 border-t border-[#E2E8F0] grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
-              <div className="space-y-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">
-                  Supported Inputs (Live Now)
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
-                    ✓ Topic
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
-                    ✓ Text
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
-                    ✓ PDF
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
-                    ✓ Notes
-                  </span>
-                </div>
-              </div>
 
-              <div className="space-y-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                  Roadmap Integrations
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 rounded-lg bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] text-xs font-medium">
-                    • Website URL
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] text-xs font-medium">
-                    • YouTube transcript
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] text-xs font-medium">
-                    • Documents
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -713,52 +509,58 @@ export default function HomePage() {
                   })}
                 </div>
 
-                <div className="pt-2 flex justify-end">
-                  <Link href="/quizzes">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5"
-                    >
-                      <span>Next Question</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                </div>
               </Card>
             </div>
 
             {/* Right: 9. AI Explanation Reveal */}
             <div className="lg:col-span-5">
-              <Card className="p-6 sm:p-7 rounded-3xl bg-emerald-50/50 border border-emerald-200 shadow-md space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">
-                    ✓
-                  </span>
-                  <span className="font-extrabold text-emerald-800 text-base">
-                    Correct!
-                  </span>
-                </div>
+              {(() => {
+                const selectedOpt = previewQuestion.options.find(o => o.id === selectedPreviewOption) || previewQuestion.options[1];
+                const isCorrect = selectedOpt.correct;
+                return (
+                  <Card className={`p-6 sm:p-7 rounded-3xl shadow-md space-y-4 transition-colors duration-300 ${
+                    isCorrect ? 'bg-emerald-50/50 border border-emerald-200' : 'bg-rose-50/50 border border-rose-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-sm ${
+                        isCorrect ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}>
+                        {isCorrect ? '✓' : '✕'}
+                      </span>
+                      <span className={`font-extrabold text-base ${
+                        isCorrect ? 'text-emerald-800' : 'text-rose-800'
+                      }`}>
+                        {isCorrect ? 'Correct!' : 'Incorrect'}
+                      </span>
+                    </div>
 
-                <div className="space-y-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 block">
-                    Why?
-                  </span>
-                  <p className="text-xs sm:text-sm text-emerald-950 leading-relaxed">
-                    {previewQuestion.explanation}
-                  </p>
-                </div>
+                    <div className="space-y-1.5">
+                      <span className={`text-xs font-bold uppercase tracking-wider block ${
+                        isCorrect ? 'text-emerald-900' : 'text-rose-900'
+                      }`}>
+                        Why?
+                      </span>
+                      <p className={`text-xs sm:text-sm leading-relaxed ${
+                        isCorrect ? 'text-emerald-950' : 'text-rose-950'
+                      }`}>
+                        {selectedOpt.feedback}
+                      </p>
+                    </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-emerald-200/80 space-y-1 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-                    <Lightbulb className="w-3.5 h-3.5" />
-                    <span>Tip:</span>
-                  </div>
-                  <p className="text-xs text-[#0F172A] leading-relaxed">
-                    {previewQuestion.tip}
-                  </p>
-                </div>
-              </Card>
+                    <div className={`p-3.5 rounded-xl bg-white space-y-1 shadow-2xs ${
+                      isCorrect ? 'border border-emerald-200/80' : 'border border-rose-200/80'
+                    }`}>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                        <Lightbulb className="w-3.5 h-3.5" />
+                        <span>Tip:</span>
+                      </div>
+                      <p className="text-xs text-[#0F172A] leading-relaxed">
+                        {previewQuestion.tip}
+                      </p>
+                    </div>
+                  </Card>
+                );
+              })()}
             </div>
           </div>
         </section>
@@ -847,176 +649,7 @@ export default function HomePage() {
         {/* ================================================================= */}
         {/* GLOBAL LEADERBOARD SECTION ⭐ */}
         {/* ================================================================= */}
-        <section id="leaderboard" className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12 scroll-mt-24">
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800 shadow-2xs">
-              <Trophy className="w-3.5 h-3.5 text-amber-600" />
-              <span>Real-Time Competition</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
-              Global Leaderboard
-            </h2>
-            <p className="text-sm sm:text-base text-[#64748B] max-w-xl mx-auto">
-              Compete with fellow learners, maintain daily learning streaks, and climb the real-time ranks.
-            </p>
-          </div>
-
-          {/* Top 3 Podium Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-            {/* Rank 2 (Silver) */}
-            {topLearners[1] && (
-              <div className="order-2 md:order-1 p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-md hover:shadow-xl transition-all duration-300 text-center space-y-4 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 text-xs font-black flex items-center gap-1 shadow-2xs">
-                  <span>🥈 #2 Silver</span>
-                </div>
-                <div className="relative inline-block mx-auto pt-2">
-                  <img
-                    src={topLearners[1].avatar}
-                    alt={topLearners[1].name}
-                    className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-300 shadow-md mx-auto"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-base text-[#0F172A]">{topLearners[1].name}</h4>
-                  <div className="flex items-center justify-center gap-3 mt-1.5 text-xs text-[#64748B]">
-                    <span className="flex items-center gap-1 font-semibold text-[#2563EB]">
-                      <Star className="w-3.5 h-3.5 fill-[#2563EB]" />
-                      {topLearners[1].xp} XP
-                    </span>
-                    <span>&bull;</span>
-                    <span className="flex items-center gap-1 font-semibold text-amber-600">
-                      <Flame className="w-3.5 h-3.5 fill-amber-500" />
-                      {topLearners[1].streak}d
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Rank 1 (Gold) - Elevated in center */}
-            {topLearners[0] && (
-              <div className="order-1 md:order-2 p-8 rounded-3xl bg-gradient-to-b from-amber-50/70 to-white border-2 border-amber-300/80 shadow-xl hover:shadow-2xl transition-all duration-300 text-center space-y-4 relative md:-translate-y-4">
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-amber-400 text-amber-950 text-xs font-black flex items-center gap-1.5 shadow-md">
-                  <Crown className="w-3.5 h-3.5 fill-amber-950" />
-                  <span>👑 #1 Champion</span>
-                </div>
-                <div className="relative inline-block mx-auto pt-2">
-                  <img
-                    src={topLearners[0].avatar}
-                    alt={topLearners[0].name}
-                    className="w-24 h-24 rounded-2xl object-cover border-4 border-amber-400 shadow-lg mx-auto"
-                  />
-                  <span className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center text-xs font-black shadow-xs">
-                    🥇
-                  </span>
-                </div>
-                <div>
-                  <h4 className="font-black text-lg text-[#0F172A]">{topLearners[0].name}</h4>
-                  <div className="flex items-center justify-center gap-3 mt-2 text-xs">
-                    <span className="flex items-center gap-1 font-bold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-lg">
-                      <Star className="w-3.5 h-3.5 fill-[#2563EB]" />
-                      {topLearners[0].xp} XP
-                    </span>
-                    <span className="flex items-center gap-1 font-bold text-amber-800 bg-amber-100/70 px-2.5 py-1 rounded-lg">
-                      <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                      {topLearners[0].streak} Day Streak
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Rank 3 (Bronze) */}
-            {topLearners[2] && (
-              <div className="order-3 p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-md hover:shadow-xl transition-all duration-300 text-center space-y-4 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-800 text-xs font-black flex items-center gap-1 shadow-2xs">
-                  <span>🥉 #3 Bronze</span>
-                </div>
-                <div className="relative inline-block mx-auto pt-2">
-                  <img
-                    src={topLearners[2].avatar}
-                    alt={topLearners[2].name}
-                    className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400/60 shadow-md mx-auto"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-base text-[#0F172A]">{topLearners[2].name}</h4>
-                  <div className="flex items-center justify-center gap-3 mt-1.5 text-xs text-[#64748B]">
-                    <span className="flex items-center gap-1 font-semibold text-[#2563EB]">
-                      <Star className="w-3.5 h-3.5 fill-[#2563EB]" />
-                      {topLearners[2].xp} XP
-                    </span>
-                    <span>&bull;</span>
-                    <span className="flex items-center gap-1 font-semibold text-amber-600">
-                      <Flame className="w-3.5 h-3.5 fill-amber-500" />
-                      {topLearners[2].streak}d
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Ranks 4 & 5 List + Full Leaderboard CTA */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-md space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                Top Competitors
-              </span>
-              <span className="text-xs font-mono text-[#2563EB] flex items-center gap-1">
-                <Zap className="w-3 h-3 text-[#38BDF8]" />
-                Redis Live Ranks
-              </span>
-            </div>
-
-            <div className="divide-y divide-[#E2E8F0]">
-              {topLearners.slice(3, 5).map((learner) => (
-                <div key={learner.rank} className="py-3 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-xs font-bold text-[#64748B] font-mono">
-                      #{learner.rank}
-                    </span>
-                    <img
-                      src={learner.avatar}
-                      alt={learner.name}
-                      className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0]"
-                    />
-                    <div>
-                      <span className="text-sm font-bold text-[#0F172A] block">{learner.name}</span>
-                      <span className="text-[11px] text-[#64748B] capitalize">{learner.role || 'student'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs font-semibold">
-                    <span className="flex items-center gap-1 text-amber-600">
-                      <Flame className="w-3.5 h-3.5 fill-amber-500" />
-                      {learner.streak}d
-                    </span>
-                    <span className="font-mono text-[#2563EB] font-bold">
-                      {learner.xp} XP
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className="text-xs text-[#64748B]">
-                Take quizzes to gain XP, unlock milestone badges, and climb the leaderboard!
-              </p>
-              <Link href="/leaderboard">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs px-4"
-                >
-                  <Trophy className="w-3.5 h-3.5" />
-                  <span>View Full Leaderboard</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+        <LeaderboardSection />
 
         {/* ================================================================= */}
         {/* 11. CATEGORIES */}
@@ -1044,7 +677,7 @@ export default function HomePage() {
             ].map((cat, idx) => (
               <Link
                 key={idx}
-                href={`/quizzes/generate?category=${encodeURIComponent(cat.slug)}`}
+                href="/login"
                 className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#2563EB] hover:shadow-md transition-all group flex flex-col justify-between"
               >
                 <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">

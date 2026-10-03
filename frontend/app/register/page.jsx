@@ -18,7 +18,6 @@ const registerFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['student', 'teacher']).default('student'),
 });
 
 export default function RegisterPage() {
@@ -39,11 +38,8 @@ export default function RegisterPage() {
       name: '',
       email: '',
       password: '',
-      role: 'student',
     },
   });
-
-  const selectedRole = useWatch({ control, name: 'role', defaultValue: 'student' });
 
   // If already authenticated, redirect to dashboard
   React.useEffect(() => {
@@ -93,48 +89,9 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Role Selection (Also applies to Google signup) */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-[#0F172A]">I am joining as:</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setValue('role', 'student')}
-                className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-200 cursor-pointer ${
-                  selectedRole === 'student'
-                    ? 'bg-[#EFF6FF] border-[#2563EB] text-[#0F172A] shadow-sm ring-1 ring-[#2563EB]/30'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
-                }`}
-              >
-                <GraduationCap className={`w-4 h-4 shrink-0 ${selectedRole === 'student' ? 'text-[#2563EB]' : 'text-[#64748B]'}`} />
-                <div>
-                  <div className="text-xs font-semibold">Student</div>
-                  <div className="text-[10px] text-[#64748B]">Take & learn</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setValue('role', 'teacher')}
-                className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-200 cursor-pointer ${
-                  selectedRole === 'teacher'
-                    ? 'bg-[#EFF6FF] border-[#2563EB] text-[#0F172A] shadow-sm ring-1 ring-[#2563EB]/30'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
-                }`}
-              >
-                <School className={`w-4 h-4 shrink-0 ${selectedRole === 'teacher' ? 'text-[#2563EB]' : 'text-[#64748B]'}`} />
-                <div>
-                  <div className="text-xs font-semibold">Teacher</div>
-                  <div className="text-[10px] text-[#64748B]">Create & teach</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
           {/* Sign Up with Google Button */}
           <GoogleSignInButton
             mode="signup"
-            role={selectedRole}
             onError={(msg) => setErrorMessage(msg)}
           />
 

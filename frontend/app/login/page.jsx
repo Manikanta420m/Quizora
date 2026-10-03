@@ -61,23 +61,14 @@ export default function LoginPage() {
   /**
    * One-click demo login helper to quickly test the application
    */
-  const handleQuickDemo = async (role) => {
+  const handleQuickDemo = async () => {
     setErrorMessage('');
     setIsSubmitting(true);
-    const demoData =
-      role === 'student'
-        ? {
-            name: 'Demo Student',
-            email: 'student@demo.com',
-            password: 'password123',
-            role: 'student',
-          }
-        : {
-            name: 'Demo Teacher',
-            email: 'teacher@demo.com',
-            password: 'password123',
-            role: 'teacher',
-          };
+    const demoData = {
+      name: 'Demo User',
+      email: 'demo@example.com',
+      password: 'password123',
+    };
 
     try {
       // First attempt to login
@@ -133,26 +124,18 @@ export default function LoginPage() {
 
           {/* Quick Demo Login Bar */}
           <div className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#1E40AF]">
-              <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
-              <span>One-Click Demo Accounts</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#1E40AF]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
+                <span>One-Click Demo Account</span>
+              </div>
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => handleQuickDemo('student')}
-                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F8FAFC] border border-[#BFDBFE] text-xs font-medium text-[#1E40AF] text-center transition-colors shadow-sm cursor-pointer"
+                onClick={handleQuickDemo}
+                className="px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] border border-[#2563EB] text-xs font-medium text-white transition-colors shadow-sm cursor-pointer"
               >
-                Demo Student
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => handleQuickDemo('teacher')}
-                className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] border border-[#2563EB] text-xs font-medium text-white text-center transition-colors shadow-sm cursor-pointer"
-              >
-                Demo Teacher
+                Sign in as Demo
               </button>
             </div>
           </div>

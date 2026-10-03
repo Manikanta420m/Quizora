@@ -9,25 +9,13 @@ import analyticsService from '@/services/analyticsService';
 import leaderboardService from '@/services/leaderboardService';
 import aiService from '@/services/aiService';
 import achievementService from '@/services/achievementService';
-import TeacherDashboard from '@/components/teacher/TeacherDashboard';
-import StudentDashboard from '@/components/student/StudentDashboard';
+import DashboardLayout from '@/components/student/StudentDashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, token, isAuthenticated } = useAuth();
-  const [viewRole, setViewRole] = useState(null); // 'teacher' | 'student' | null
   const [isGeneratingWeakPractice, setIsGeneratingWeakPractice] = useState(false);
-
-  // Fetch real teacher classroom analytics
-  const { data: teacherAnalyticsResponse } = useQuery({
-    queryKey: ['teacherAnalytics', user?._id || user?.id],
-    queryFn: () => analyticsService.getTeacherStats(token),
-    enabled: !!isAuthenticated && !!token,
-    staleTime: 1000 * 15,
-  });
-
-  const effectiveRole = viewRole || (user?.role === 'teacher' ? 'teacher' : 'student');
 
   // Fetch real performance analytics
   const { data: analyticsResponse } = useQuery({
@@ -80,25 +68,13 @@ export default function DashboardPage() {
     }
   };
 
-  if (effectiveRole === 'teacher') {
-    return (
-      <ProtectedRoute>
-        <TeacherDashboard
-          teacherData={teacherAnalyticsResponse?.data}
-          onSwitchToStudentView={() => setViewRole('student')}
-        />
-      </ProtectedRoute>
-    );
-  }
-
   return (
     <ProtectedRoute>
-      <StudentDashboard
+      <DashboardLayout
         user={user}
         analyticsData={analyticsResponse?.data}
         myRankData={myRankResponse?.data}
         achievementsData={achievementsResponse?.data}
-        onSwitchToTeacherView={() => setViewRole('teacher')}
         onGenerateWeakPractice={handleGenerateWeakPractice}
         isGeneratingWeakPractice={isGeneratingWeakPractice}
       />

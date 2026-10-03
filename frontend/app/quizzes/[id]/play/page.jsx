@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -42,8 +42,10 @@ import { useSound } from '@/context/SoundContext';
 
 export default function QuizPlayerPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const quizId = params?.id;
+  const timeQuery = searchParams.get('time');
   const { user, token } = useAuth();
   const { playSound } = useSound();
   const queryClient = useQueryClient();
@@ -88,7 +90,8 @@ export default function QuizPlayerPage() {
   const [initializedQuizId, setInitializedQuizId] = useState(null);
   if (quiz && quiz._id !== initializedQuizId) {
     setInitializedQuizId(quiz._id);
-    setRemainingTime((quiz.timeLimit || 10) * 60);
+    const initialTimeLimit = timeQuery ? Number(timeQuery) : (quiz.timeLimit || 10);
+    setRemainingTime(initialTimeLimit * 60);
   }
 
   // Submission Mutation
@@ -458,7 +461,8 @@ export default function QuizPlayerPage() {
                   setUserAnswers({});
                   setCurrentIdx(0);
                   setTimeSpent(0);
-                  setRemainingTime((quiz.timeLimit || 10) * 60);
+                  const initialTimeLimit = timeQuery ? Number(timeQuery) : (quiz.timeLimit || 10);
+                  setRemainingTime(initialTimeLimit * 60);
                 }}
                 className="gap-2"
               >
