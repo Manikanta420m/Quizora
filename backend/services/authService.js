@@ -39,7 +39,7 @@ export const generateTokens = (user) => {
 /**
  * Register a new user
  */
-export const registerUser = async ({ name, email, password, role = 'student' }) => {
+export const registerUser = async ({ name, email, password }) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   // 1. If MongoDB is connected, use real Mongoose operations
@@ -58,7 +58,7 @@ export const registerUser = async ({ name, email, password, role = 'student' }) 
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      role,
+      role: 'student',
       avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=6366f1`,
       xp: 0,
       streak: 0,
@@ -86,7 +86,7 @@ export const registerUser = async ({ name, email, password, role = 'student' }) 
     name: name.trim(),
     email: normalizedEmail,
     passwordHash,
-    role,
+    role: 'student',
     avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=6366f1`,
     xp: 0,
     streak: 0,

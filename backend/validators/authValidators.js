@@ -18,12 +18,6 @@ export const registerSchema = z.object({
     .string({ required_error: 'Password is required' })
     .min(6, 'Password must be at least 6 characters long')
     .max(100, 'Password is too long'),
-  role: z
-    .enum(['student', 'teacher', 'admin'], {
-      errorMap: () => ({ message: 'Role must be student, teacher, or admin' }),
-    })
-    .default('student')
-    .optional(),
 });
 
 /**
