@@ -14,8 +14,8 @@ const envSchema = z.object({
     .default('mongodb://127.0.0.1:27017/ai_quiz_generator'),
   REDIS_URL: z.string().default('redis://127.0.0.1:6379'),
   CLIENT_URL: z.string().default('http://localhost:3000'),
-  JWT_ACCESS_SECRET: z.string().default('super-secret-access-token-key-change-in-prod'),
-  JWT_REFRESH_SECRET: z.string().default('super-secret-refresh-token-key-change-in-prod'),
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters long'),
+  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters long'),
   AI_API_KEY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
 });

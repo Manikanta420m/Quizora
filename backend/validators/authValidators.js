@@ -41,12 +41,6 @@ export const googleAuthSchema = z.object({
   credential: z
     .string({ required_error: 'Google credential token is required' })
     .min(1, 'Google credential token cannot be empty'),
-  role: z
-    .enum(['student', 'teacher', 'admin'], {
-      errorMap: () => ({ message: 'Role must be student, teacher, or admin' }),
-    })
-    .default('student')
-    .optional(),
 });
 
 export default {

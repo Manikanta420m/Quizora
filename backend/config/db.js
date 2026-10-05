@@ -18,10 +18,18 @@ mongoose.connection.on('connected', () => {
 });
 
 mongoose.connection.on('error', (err) => {
+  if (env.NODE_ENV === 'production') {
+    logger.error(`MongoDB error during runtime: ${err.message}. Exiting production server to prevent data loss.`);
+    process.exit(1);
+  }
   logger.warn(`MongoDB notice: ${err.message}`);
 });
 
 mongoose.connection.on('disconnected', () => {
+  if (env.NODE_ENV === 'production') {
+    logger.error('MongoDB disconnected unexpectedly. Exiting production server to prevent data loss.');
+    process.exit(1);
+  }
   logger.warn('MongoDB disconnected');
 });
 

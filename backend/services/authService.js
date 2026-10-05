@@ -386,7 +386,7 @@ export const verifyGoogleToken = async (credential) => {
 /**
  * Sign In / Sign Up with Google
  */
-export const googleAuth = async ({ credential, role = 'student' }) => {
+export const googleAuth = async ({ credential }) => {
   const profile = await verifyGoogleToken(credential);
 
   // 1. Real MongoDB Database Flow
@@ -417,7 +417,7 @@ export const googleAuth = async ({ credential, role = 'student' }) => {
         email: profile.email,
         googleId: profile.googleId,
         authProvider: 'google',
-        role: role || 'student',
+        role: 'student',
         avatar: profile.avatar,
         xp: 0,
         streak: 0,
@@ -464,7 +464,7 @@ export const googleAuth = async ({ credential, role = 'student' }) => {
       email: profile.email,
       googleId: profile.googleId,
       authProvider: 'google',
-      role: role || 'student',
+      role: 'student',
       avatar: profile.avatar,
       xp: 0,
       streak: 0,
