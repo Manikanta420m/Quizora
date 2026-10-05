@@ -4,7 +4,7 @@ import { redisClient } from '../config/redis.js';
 const memoryStore = new Map();
 
 export const rateLimit = (options) => {
-  const { windowMs, max, keyPrefix = 'rl' } = options;
+  const { windowMs, max, keyPrefix = 'rl', failClosed = false } = options;
   const windowSeconds = Math.ceil(windowMs / 1000);
 
   return async (req, res, next) => {
@@ -50,6 +50,12 @@ export const rateLimit = (options) => {
       
       next();
     } catch (error) {
+      if (failClosed) {
+        return res.status(500).json({
+          success: false,
+          message: 'Rate limiter unavailable. Request denied for security.',
+        });
+      }
       // Fail open so we don't break the application if Redis crashes mid-request
       next();
     }
@@ -59,17 +65,27 @@ export const rateLimit = (options) => {
 export const aiGenerateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 10,
-  keyPrefix: 'rl:ai:generate'
+  keyPrefix: 'rl:ai:generate',
+  failClosed: true,
 });
 
 export const aiHintLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 30,
-  keyPrefix: 'rl:ai:hint'
+  keyPrefix: 'rl:ai:hint',
+  failClosed: true,
 });
 
 export const documentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5,
-  keyPrefix: 'rl:ai:document'
+  keyPrefix: 'rl:ai:document',
+  failClosed: true,
+});
+
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 login/register attempts per 15 minutes
+  keyPrefix: 'rl:auth',
+  failClosed: true,
 });

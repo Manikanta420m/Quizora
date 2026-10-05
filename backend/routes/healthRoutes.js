@@ -17,6 +17,13 @@ router.get('/health', async (req, res, next) => {
 
     const isSystemHealthy = dbStatus.isConnected || redisStatus.status === 'healthy';
 
+    if (env.NODE_ENV === 'production') {
+      return res.status(200).json({
+        success: true,
+        status: 'healthy',
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'AI Quiz Generator Backend is operational',
