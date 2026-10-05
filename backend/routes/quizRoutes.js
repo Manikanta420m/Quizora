@@ -13,6 +13,7 @@ import {
   getQuizLeaderboard,
 } from '../controllers/quizController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { uploadDocument } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
@@ -31,10 +32,10 @@ router.post('/', protect, create);
 router.post('/generate', protect, generate);
 router.post('/generate-flashcards', protect, generateFlashcards);
 router.post('/from-document', protect, uploadDocument.single('document'), generateFromDocument);
-router.post('/seed', protect, seed);
+router.post('/seed', protect, authorizeRoles('admin'), seed);
 router.post('/:id/submit', protect, submitAttempt);
 router.get('/:id/attempts', protect, getAttempts);
-router.delete('/:id', protect, deleteQuiz);
+router.delete('/:id', protect, authorizeRoles('admin', 'teacher'), deleteQuiz);
 
 export default router;
 
