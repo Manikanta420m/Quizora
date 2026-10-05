@@ -1,4 +1,5 @@
 import authService from '../services/authService.js';
+import jwt from 'jsonwebtoken';
 import { registerSchema, loginSchema, googleAuthSchema } from '../validators/authValidators.js';
 import env from '../config/env.js';
 
@@ -90,12 +91,27 @@ export const googleLogin = async (req, res, next) => {
  * @desc    Clear refresh token cookie and invalidate session
  * @access  Public
  */
-export const logout = async (req, res) => {
-  res.clearCookie('refresh_token', { path: '/' });
-  res.status(200).json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+export const logout = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies?.refresh_token;
+    
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
+        await authService.revokeRefreshToken(decoded.id, refreshToken);
+      } catch (err) {
+        // Token is already invalid/expired, proceed to clear cookie
+      }
+    }
+
+    res.clearCookie('refresh_token', { path: '/' });
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**

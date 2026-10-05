@@ -321,6 +321,18 @@ export const refreshAccessToken = async (refreshToken) => {
 };
 
 /**
+ * Revoke a refresh token (e.g., on logout)
+ */
+export const revokeRefreshToken = async (userId, refreshToken) => {
+  if (!refreshToken || !isMongoConnected()) return;
+  
+  const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  await User.findByIdAndUpdate(userId, {
+    $pull: { refreshTokens: hashedToken }
+  });
+};
+
+/**
  * Verify Google ID Token against Google Tokeninfo API or dev token
  */
 export const verifyGoogleToken = async (credential) => {
@@ -331,7 +343,10 @@ export const verifyGoogleToken = async (credential) => {
   }
 
   // 1. Dev / Test Mode simulated Google credential (e.g. for testing without external GCP setup)
-  if (credential.startsWith('dev-google-token:') || credential.startsWith('test-google-token:')) {
+  if (
+    env.NODE_ENV !== 'production' &&
+    (credential.startsWith('dev-google-token:') || credential.startsWith('test-google-token:'))
+  ) {
     const parts = credential.split(':');
     const email = parts[1] || 'google.student@example.com';
     const name = parts[2] || 'Google Learner';
