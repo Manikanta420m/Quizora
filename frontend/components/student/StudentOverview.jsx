@@ -244,7 +244,7 @@ export default function StudentOverview({
   ];
 
   const handleCopyChallenge = () => {
-    navigator.clipboard.writeText('https://quizora.app/challenge/QZ-82FA');
+    navigator.clipboard.writeText(`${window.location.origin}/challenge/QZ-82FA`);
     setCopiedChallenge(true);
     setTimeout(() => setCopiedChallenge(false), 2000);
   };

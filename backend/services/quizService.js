@@ -10,6 +10,120 @@ export const devMemoryAttempts = new Map();
 
 export const isMongoConnected = () => mongoose.connection.readyState === 1;
 
+const MOCK_SAVED_QUIZZES = {
+  'sq_1': {
+    _id: 'sq_1',
+    id: 'sq_1',
+    title: 'JavaScript Advanced',
+    topic: 'javascript',
+    difficulty: 'hard',
+    timeLimit: 15,
+    questions: [
+      {
+        question: 'What is the temporal dead zone in JavaScript?',
+        options: ['The time between variable hoisting and initialization', 'A memory leak caused by closures', 'An unreachable block of code', 'The latency of an async fetch request'],
+        correctAnswer: 0,
+        explanation: 'The Temporal Dead Zone (TDZ) is the period between entering scope and being declared where let and const variables cannot be accessed.'
+      },
+      {
+        question: 'Which of the following is true about JavaScript Maps vs Objects?',
+        options: ['Maps have a default prototype chain, Objects do not', 'Object keys can be functions, Map keys cannot', 'Map keys can be any type, Object keys must be strings or Symbols', 'Objects maintain insertion order, Maps do not'],
+        correctAnswer: 2,
+        explanation: 'Maps allow any data type (including objects and functions) as keys, whereas Object keys must be Strings or Symbols.'
+      },
+      {
+        question: 'How do you correctly clone a deeply nested object in modern JavaScript?',
+        options: ['JSON.parse(JSON.stringify(obj))', 'Object.assign({}, obj)', '{...obj}', 'structuredClone(obj)'],
+        correctAnswer: 3,
+        explanation: 'structuredClone() is the modern, built-in way to deep clone objects in JavaScript, supporting more types than JSON parsing.'
+      }
+    ]
+  },
+  'sq_2': {
+    _id: 'sq_2',
+    id: 'sq_2',
+    title: 'React Hooks Deep Dive',
+    topic: 'react',
+    difficulty: 'medium',
+    timeLimit: 10,
+    questions: [
+      {
+        question: 'When exactly does useLayoutEffect fire?',
+        options: ['Asynchronously after the browser paints', 'Synchronously after all DOM mutations, before the browser paints', 'Immediately before the component unmounts', 'Before the component renders for the first time'],
+        correctAnswer: 1,
+        explanation: 'useLayoutEffect fires synchronously after DOM mutations but before the browser has a chance to paint the screen.'
+      },
+      {
+        question: 'What happens if you omit the dependency array in useEffect?',
+        options: ['It runs only on mount', 'It runs after every single render', 'It throws an error', 'It never runs'],
+        correctAnswer: 1,
+        explanation: 'Without a dependency array, useEffect runs after every render, potentially causing infinite loops if it updates state.'
+      },
+      {
+        question: 'What is the primary purpose of useMemo?',
+        options: ['To memoize a callback function', 'To trigger side effects', 'To cache the result of an expensive calculation', 'To avoid prop drilling'],
+        correctAnswer: 2,
+        explanation: 'useMemo caches the result of a calculation between renders. For memoizing functions, you use useCallback.'
+      }
+    ]
+  },
+  'sq_3': {
+    _id: 'sq_3',
+    id: 'sq_3',
+    title: 'MongoDB Queries & Aggregation',
+    topic: 'databases',
+    difficulty: 'medium',
+    timeLimit: 12,
+    questions: [
+      {
+        question: 'Which aggregation pipeline stage is used to filter documents?',
+        options: ['$group', '$project', '$match', '$filter'],
+        correctAnswer: 2,
+        explanation: '$match is used to filter documents in the aggregation pipeline, similar to a standard find() query.'
+      },
+      {
+        question: 'How do you perform a left outer join in MongoDB?',
+        options: ['$join', '$lookup', '$merge', '$populate'],
+        correctAnswer: 1,
+        explanation: 'The $lookup stage performs a left outer join to an unsharded collection in the same database.'
+      },
+      {
+        question: 'Which stage modifies the structure of documents passing through the pipeline?',
+        options: ['$project', '$group', '$unwind', '$sort'],
+        correctAnswer: 0,
+        explanation: '$project can pass along, add, remove, or compute new fields for the documents.'
+      }
+    ]
+  },
+  'sq_4': {
+    _id: 'sq_4',
+    id: 'sq_4',
+    title: 'Graph Algorithms & BFS/DFS',
+    topic: 'dsa',
+    difficulty: 'hard',
+    timeLimit: 20,
+    questions: [
+      {
+        question: 'Which data structure is naturally used to implement Breadth-First Search (BFS)?',
+        options: ['Stack', 'Queue', 'Priority Queue', 'Linked List'],
+        correctAnswer: 1,
+        explanation: 'BFS explores level by level and requires a Queue (FIFO) to keep track of nodes to visit next.'
+      },
+      {
+        question: 'What is the time complexity of Depth-First Search (DFS) on a graph represented as an adjacency list?',
+        options: ['O(V)', 'O(E)', 'O(V + E)', 'O(V * E)'],
+        correctAnswer: 2,
+        explanation: 'DFS visits every vertex (V) and explores every edge (E), resulting in O(V + E) time complexity.'
+      },
+      {
+        question: 'Which algorithm is best suited for finding the shortest path in an unweighted graph?',
+        options: ['Depth-First Search', "Dijkstra's Algorithm", 'Breadth-First Search', 'A* Search'],
+        correctAnswer: 2,
+        explanation: 'In an unweighted graph, BFS guarantees the shortest path because it explores neighbors uniformly.'
+      }
+    ]
+  }
+};
 
 /**
  * Create a new quiz
@@ -74,13 +188,30 @@ export const getQuizzes = async ({ search, topic, difficulty, page = 1, limit = 
       .limit(limit)
       .populate('userId', 'name avatar role');
 
+    let mockArr = Object.values(MOCK_SAVED_QUIZZES);
+    
+    if (topic && topic !== 'all') {
+      mockArr = mockArr.filter((q) => q.topic === topic.toLowerCase().trim());
+    }
+    if (difficulty && difficulty !== 'all') {
+      mockArr = mockArr.filter((q) => q.difficulty === difficulty);
+    }
+    if (search && search.trim()) {
+      const s = search.toLowerCase().trim();
+      mockArr = mockArr.filter(
+        (q) => q.title.toLowerCase().includes(s) || q.topic.toLowerCase().includes(s)
+      );
+    }
+
+    const finalQuizzes = page === 1 ? [...mockArr, ...quizzes] : quizzes;
+
     return {
-      quizzes,
+      quizzes: finalQuizzes,
       pagination: {
         page,
         limit,
         totalPages,
-        totalCount,
+        totalCount: totalCount + mockArr.length,
       },
     };
   }
@@ -126,6 +257,10 @@ export const getQuizzes = async ({ search, topic, difficulty, page = 1, limit = 
  * Get a single quiz by ID
  */
 export const getQuizById = async (quizId) => {
+  if (quizId.startsWith('sq_') && MOCK_SAVED_QUIZZES[quizId]) {
+    return MOCK_SAVED_QUIZZES[quizId];
+  }
+
   if (isMongoConnected()) {
     const quiz = await Quiz.findById(quizId).populate('userId', 'name avatar role');
     return quiz;

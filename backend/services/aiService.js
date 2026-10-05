@@ -140,11 +140,12 @@ const RETRYABLE_STATUS_CODES = new Set([
 async function fetchWithRetry(url, options, maxRetries = 3) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     let response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
     try {
-      response = await fetch(url, options);
+      response = await fetch(url, { ...options, signal: controller.signal });
     } catch (error) {
-      // Network error
       if (attempt >= maxRetries) {
         throw error;
       }
@@ -154,21 +155,38 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
         Math.floor(Math.random() * 500);
 
       logger.warn(
-        `AI API network error. Retry ${attempt + 1}/${maxRetries} in ${delay}ms`
+        `AI API network error/timeout. Retry ${attempt + 1}/${maxRetries} in ${delay}ms`
       );
 
       await sleep(delay);
       continue;
+    } finally {
+      clearTimeout(timeout);
     }
 
-    // Successful response
     if (response.ok) {
       return response;
     }
 
     const errorText = await response.text();
 
-    // Don't retry permanent errors such as 400/401/403/404
+    if (response.status === 429) {
+      try {
+        const body = JSON.parse(errorText);
+        const isDailyQuota = body?.error?.details?.some((detail) =>
+          detail['@type']?.includes('QuotaFailure') && detail.violations?.some((v) => v.quotaId?.includes('PerDayPerProject'))
+        );
+        if (isDailyQuota) {
+          const error = new Error('AI daily quota exceeded');
+          error.status = 429;
+          error.code = 'AI_DAILY_QUOTA_EXCEEDED';
+          throw error;
+        }
+      } catch (parseErr) {
+        // Not a JSON response or could not determine quota type, proceed to standard retry
+      }
+    }
+
     if (
       !RETRYABLE_STATUS_CODES.has(response.status) ||
       attempt >= maxRetries
@@ -176,13 +194,10 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
       const error = new Error(
         `AI API error (${response.status}): ${errorText}`
       );
-
       error.status = response.status;
-
       throw error;
     }
 
-    // Exponential backoff + jitter, or respect Retry-After
     const retryAfter = response.headers.get('retry-after');
     const delay = retryAfter 
       ? Number(retryAfter) * 1000 
@@ -630,13 +645,29 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
  * Procedural fallback for Flashcards
  */
 const generateProceduralFlashcards = (topic, numberOfCards) => {
+  const normalizedTopic = topic.toLowerCase().trim();
   const capTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
+  const existingQuestions = TOPIC_KNOWLEDGE_BASE[normalizedTopic] || [];
+  
+  const flashcards = [];
+  
+  for (let i = 0; i < numberOfCards; i++) {
+    if (i < existingQuestions.length) {
+      flashcards.push({
+        front: existingQuestions[i].question,
+        back: existingQuestions[i].explanation,
+      });
+    } else {
+      flashcards.push({
+        front: `What is a core architectural principle of ${capTopic} (Part ${i + 1})?`,
+        back: `A foundational approach in ${capTopic} emphasizing modularity, predictable data flow, and optimal performance.`,
+      });
+    }
+  }
+
   return {
     topic: capTopic,
-    flashcards: Array.from({ length: numberOfCards }).map((_, i) => ({
-      front: `${capTopic} Concept ${i + 1}`,
-      back: `This is the procedural definition for ${capTopic} concept ${i + 1}.`,
-    })),
+    flashcards,
   };
 };
 

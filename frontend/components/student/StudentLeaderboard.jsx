@@ -15,18 +15,39 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useQuery } from '@tanstack/react-query';
+import leaderboardService from '@/services/leaderboardService';
 
 export default function StudentLeaderboard({ user }) {
   const [boardType, setBoardType] = useState('weekly'); // 'weekly' | 'monthly' | 'class' | 'global'
 
-  const rankings = [
-    { rank: 1, medal: '🥇', name: 'Ananya Sharma', class: 'CS101', xp: 1240, score: 94, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80' },
-    { rank: 2, medal: '🥈', name: 'Rahul Kumar', class: 'CS101', xp: 1180, score: 91, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
-    { rank: 3, medal: '🥉', name: 'Priya Patel', class: 'CS101', xp: 1105, score: 89, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80' },
-    { rank: 4, medal: '4', name: user?.name || 'Mani', class: 'CS101', xp: 1050, score: 87, isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
-    { rank: 5, medal: '5', name: 'David Kim', class: 'CS101', xp: 980, score: 85, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80' },
-    { rank: 6, medal: '6', name: 'Elena Rostova', class: 'CS101', xp: 920, score: 84, avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80' },
+  const fallbackRankings = [
+    { rank: 1, medal: '🥇', name: 'Ananya Sharma', class: 'Student', xp: 1240, score: '🔥 7 day streak', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80' },
+    { rank: 2, medal: '🥈', name: 'Rahul Kumar', class: 'Student', xp: 1180, score: '🔥 5 day streak', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
+    { rank: 3, medal: '🥉', name: 'Priya Patel', class: 'Student', xp: 1105, score: '🔥 3 day streak', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80' },
+    { rank: 4, medal: '4', name: user?.name || 'Mani', class: 'Student', xp: 1050, score: '🔥 2 day streak', isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
   ];
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['globalLeaderboard', boardType],
+    queryFn: () => leaderboardService.getLeaderboard({ limit: 50 }),
+    staleTime: 1000 * 30, // 30 seconds
+  });
+
+  const apiRankings = data?.leaderboard || [];
+
+  const displayRankings = apiRankings.length > 0 
+    ? apiRankings.map((r, i) => ({
+        rank: r.rank || (i + 1),
+        medal: r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : String(r.rank || (i + 1)),
+        name: r.name,
+        class: r.role === 'student' ? 'Student' : (r.role || 'Student'),
+        xp: r.xp,
+        score: r.streak > 0 ? `🔥 ${r.streak} day streak` : '0 day streak',
+        avatar: r.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(r.name)}&backgroundColor=6366f1`,
+        isMe: r.userId === user?._id || r.userId === user?.id
+      }))
+    : (isLoading ? fallbackRankings : []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -70,7 +91,12 @@ export default function StudentLeaderboard({ user }) {
       {/* Rankings List */}
       <Card className="bg-white border-[#E2E8F0] shadow-sm rounded-3xl overflow-hidden p-6 space-y-3">
         <div className="space-y-2">
-          {rankings.map((item) => (
+          {displayRankings.length === 0 && !isLoading && (
+            <div className="text-center p-8 text-slate-500 font-medium">
+              No competitors on the leaderboard yet. Take a quiz to claim #1!
+            </div>
+          )}
+          {displayRankings.map((item) => (
             <div
               key={item.rank}
               className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
@@ -93,7 +119,7 @@ export default function StudentLeaderboard({ user }) {
                   <span className="font-bold text-xs sm:text-sm text-[#0F172A] block">
                     {item.name} {item.isMe && <span className="text-[#2563EB] font-mono">(You)</span>}
                   </span>
-                  <span className="text-[11px] text-[#64748B]">{item.class} &bull; {item.score}% Accuracy</span>
+                  <span className="text-[11px] text-[#64748B]">{item.class} &bull; {item.score}</span>
                 </div>
               </div>
 

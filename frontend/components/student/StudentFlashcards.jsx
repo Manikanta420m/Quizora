@@ -12,6 +12,7 @@ import {
   MoreVertical,
   ArrowLeft,
   Zap,
+  Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -81,6 +82,25 @@ export default function StudentFlashcards() {
 
     setFlashcardDecks([...savedDecks, ...mockDecks]);
   }, []);
+
+  const deleteDeck = (deckId) => {
+    if (confirm('Are you sure you want to delete this flashcard deck?')) {
+      const updatedDecks = flashcardDecks.filter((deck) => deck.id !== deckId);
+      setFlashcardDecks(updatedDecks);
+
+      // We should also remove it from localStorage if it's a saved deck
+      try {
+        const savedStr = localStorage.getItem('quizora_saved_flashcards');
+        if (savedStr) {
+          const savedDecks = JSON.parse(savedStr);
+          const newSaved = savedDecks.filter((deck) => deck.id !== deckId);
+          localStorage.setItem('quizora_saved_flashcards', JSON.stringify(newSaved));
+        }
+      } catch (e) {
+        console.error('Failed to update localStorage after deletion');
+      }
+    }
+  };
 
   const filteredDecks = flashcardDecks.filter(deck =>
     deck.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -203,8 +223,12 @@ export default function StudentFlashcards() {
                   <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
                     <Layers className="w-5 h-5" />
                   </div>
-                  <button className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors cursor-pointer">
-                    <MoreVertical className="w-4 h-4" />
+                  <button 
+                    onClick={() => deleteDeck(deck.id)}
+                    title="Delete Deck"
+                    className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 

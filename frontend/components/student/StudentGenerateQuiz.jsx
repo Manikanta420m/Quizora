@@ -130,9 +130,21 @@ export default function StudentGenerateQuiz({ onCancel }) {
       const generatedQuiz = res?.quiz;
 
       if (generatedQuiz?._id || generatedQuiz?.id) {
+        const qId = generatedQuiz._id || generatedQuiz.id;
+        
+        // Auto-save the generated quiz
+        if (typeof window !== 'undefined') {
+          try {
+            const savedStr = localStorage.getItem('quizora_saved_quizzes');
+            const savedSet = savedStr ? new Set(JSON.parse(savedStr)) : new Set(['sq_1', 'sq_2', 'sq_3', 'sq_4']);
+            savedSet.add(qId);
+            localStorage.setItem('quizora_saved_quizzes', JSON.stringify(Array.from(savedSet)));
+          } catch(e) {}
+        }
+
         // Short pause to show completion step
         setTimeout(() => {
-          router.push(`/quizzes/${generatedQuiz._id || generatedQuiz.id}`);
+          router.push(`/quizzes/${qId}`);
         }, 600);
       } else {
         router.push('/quizzes');

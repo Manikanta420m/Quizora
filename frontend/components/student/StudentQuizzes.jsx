@@ -29,7 +29,14 @@ export default function StudentQuizzes({ onNavigateTab }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
   const [filterTab, setFilterTab] = useState('all'); // 'all' or 'saved'
-  const [savedQuizzes, setSavedQuizzes] = useState(new Set()); // Mock saved state
+  const [savedQuizzes, setSavedQuizzes] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('quizora_saved_quizzes');
+      if (saved) return new Set(JSON.parse(saved));
+    }
+    // Pre-populate with our mock quizzes for demo purposes
+    return new Set(['sq_1', 'sq_2', 'sq_3', 'sq_4']);
+  });
 
   // Fetch real quizzes from the backend
   const { data: quizzesResponse, isLoading } = useQuery({
@@ -52,6 +59,9 @@ export default function StudentQuizzes({ onNavigateTab }) {
         newSet.delete(quizId);
       } else {
         newSet.add(quizId);
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('quizora_saved_quizzes', JSON.stringify(Array.from(newSet)));
       }
       return newSet;
     });

@@ -45,7 +45,7 @@ export default function StudentManualChallenge() {
     // Simulate API call to create room
     setTimeout(() => {
       const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setInviteLink(`https://quizora.app/room/${roomCode}`);
+      setInviteLink(`${window.location.origin}/room/${roomCode}`);
       setRoomCreated(true);
       setIsCreating(false);
     }, 1000);
