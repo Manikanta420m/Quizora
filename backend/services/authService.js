@@ -186,8 +186,34 @@ export const awardUserGamification = async (userId, xpToAdd) => {
   if (isMongoConnected()) {
     const user = await User.findById(userId);
     if (!user) return null;
+    
+    // Add XP if applicable
     user.xp = (user.xp || 0) + (xpToAdd || 0);
-    user.streak = (user.streak || 0) + 1;
+
+    // Date-based streak calculation
+    const now = new Date();
+    const lastActive = user.lastActive ? new Date(user.lastActive) : new Date(0);
+    
+    // Strip time to just get the calendar date
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastActiveDay = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
+    
+    const diffTime = Math.abs(today - lastActiveDay);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    
+    if (diffDays === 1) {
+      // Completed a quiz the very next day, increment streak!
+      user.streak = (user.streak || 0) + 1;
+    } else if (diffDays > 1) {
+      // Missed a day, streak is lost, reset to 1
+      user.streak = 1;
+    } else if (user.streak === 0 || !user.lastActive) {
+      // Very first quiz ever taken
+      user.streak = 1;
+    }
+    // If diffDays === 0, they already took a quiz today. Keep current streak.
+
+    user.lastActive = now;
     await user.save();
 
     // Sync to Redis Leaderboard
@@ -205,7 +231,20 @@ export const awardUserGamification = async (userId, xpToAdd) => {
   for (const [email, user] of devMemoryUsers.entries()) {
     if (user._id === userId || user.id === userId) {
       user.xp = (user.xp || 0) + (xpToAdd || 0);
-      user.streak = (user.streak || 0) + 1;
+      
+      const now = new Date();
+      const lastActive = user.lastActive ? new Date(user.lastActive) : new Date(0);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const lastActiveDay = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
+      
+      const diffTime = Math.abs(today - lastActiveDay);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      if (diffDays === 1) user.streak = (user.streak || 0) + 1;
+      else if (diffDays > 1) user.streak = 1;
+      else if (user.streak === 0 || !user.lastActive) user.streak = 1;
+      
+      user.lastActive = now;
       devMemoryUsers.set(email, user);
 
       // Sync to Leaderboard

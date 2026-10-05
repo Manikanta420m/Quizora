@@ -10,6 +10,21 @@ import {
   submitQuizSchema,
 } from '../validators/quizValidators.js';
 
+/**
+ * Helper to strip answers and explanations from quizzes before returning to clients
+ */
+const sanitizeQuiz = (quiz) => {
+  const qObj = typeof quiz.toObject === 'function' ? quiz.toObject() : JSON.parse(JSON.stringify(quiz));
+  if (qObj.questions && Array.isArray(qObj.questions)) {
+    qObj.questions = qObj.questions.map(q => {
+      delete q.correctAnswer;
+      delete q.explanation;
+      return q;
+    });
+  }
+  return qObj;
+};
+
 
 /**
  * @route   POST /api/quizzes
@@ -28,7 +43,7 @@ export const create = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Quiz created successfully',
-      quiz,
+      quiz: sanitizeQuiz(quiz),
     });
   } catch (error) {
     next(error);
@@ -48,6 +63,7 @@ export const getAll = async (req, res, next) => {
     res.status(200).json({
       success: true,
       ...result,
+      quizzes: result.quizzes.map(sanitizeQuiz),
     });
   } catch (error) {
     next(error);
@@ -71,7 +87,7 @@ export const getById = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      quiz,
+      quiz: sanitizeQuiz(quiz),
     });
   } catch (error) {
     next(error);
@@ -130,7 +146,7 @@ export const generate = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Quiz generated successfully with AI',
-      quiz,
+      quiz: sanitizeQuiz(quiz),
     });
   } catch (error) {
     next(error);
@@ -186,7 +202,7 @@ export const generateFromDocument = async (req, res, next) => {
         pageCount: docData.pageCount,
         fileSize: docData.fileSize,
       },
-      quiz,
+      quiz: sanitizeQuiz(quiz),
     });
   } catch (error) {
     next(error);

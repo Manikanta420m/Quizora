@@ -353,8 +353,26 @@ export const submitQuizAttempt = async (quizId, userId, { answers = [], timeSpen
 
   const percentage = Math.round((score / totalQuestions) * 100);
   const passed = percentage >= 60;
-  // +10 XP per correct answer, +20 bonus XP for perfect 100%
-  const xpEarned = score * 10 + (percentage === 100 && totalQuestions > 0 ? 20 : 0);
+  
+  // XP Calculation - Prevent Abuse by checking previous attempts
+  let xpEarned = 0;
+  let previousAttemptsCount = 0;
+
+  if (isMongoConnected()) {
+    previousAttemptsCount = await QuizAttempt.countDocuments({ userId, quizId, passed: true });
+  } else {
+    // Check in-memory fallback
+    const attempts = Array.from(devMemoryAttempts.values());
+    previousAttemptsCount = attempts.filter(
+      (a) => a.userId === userId && a.quizId === quizId && a.passed
+    ).length;
+  }
+
+  // Only award XP if this is the first time they passed this specific quiz
+  if (previousAttemptsCount === 0) {
+    // +10 XP per correct answer, +20 bonus XP for perfect 100%
+    xpEarned = score * 10 + (percentage === 100 && totalQuestions > 0 ? 20 : 0);
+  }
 
   // Award XP and streak update to the user
   const updatedUser = await awardUserGamification(userId, xpEarned);

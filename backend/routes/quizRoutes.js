@@ -15,6 +15,7 @@ import {
 import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { uploadDocument } from '../middleware/uploadMiddleware.js';
+import { aiGenerateLimiter, documentLimiter } from '../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
@@ -29,9 +30,9 @@ router.get('/:id/leaderboard', getQuizLeaderboard);
  * Protected Quiz Management & Interactive Test-Taking Endpoints
  */
 router.post('/', protect, create);
-router.post('/generate', protect, generate);
-router.post('/generate-flashcards', protect, generateFlashcards);
-router.post('/from-document', protect, uploadDocument.single('document'), generateFromDocument);
+router.post('/generate', protect, aiGenerateLimiter, generate);
+router.post('/generate-flashcards', protect, aiGenerateLimiter, generateFlashcards);
+router.post('/from-document', protect, documentLimiter, uploadDocument.single('document'), generateFromDocument);
 router.post('/seed', protect, authorizeRoles('admin'), seed);
 router.post('/:id/submit', protect, submitAttempt);
 router.get('/:id/attempts', protect, getAttempts);

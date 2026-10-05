@@ -32,12 +32,16 @@ export const connectDB = async () => {
   try {
     logger.info(`Connecting to MongoDB at: ${env.MONGODB_URI}...`);
     await mongoose.connect(env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000,
+      serverSelectionTimeoutMS: 5000,
     });
   } catch (error) {
+    if (env.NODE_ENV === 'production') {
+      logger.error(`MongoDB connection failed: ${error.message}. Exiting production server to prevent data loss.`);
+      process.exit(1);
+    }
     logger.warn(
       `MongoDB is currently unavailable: ${error.message}. ` +
-      `Server will stay operational. Tip: Supply a local MongoDB or MongoDB Atlas URI in backend/.env.`
+      `Server will stay operational using in-memory fallback since NODE_ENV is not production.`
     );
   }
 };

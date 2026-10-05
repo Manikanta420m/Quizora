@@ -69,6 +69,10 @@ const userSchema = new mongoose.Schema(
       default: [],
       select: false,
     },
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true, // Automatically manages createdAt and updatedAt
