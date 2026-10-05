@@ -50,6 +50,57 @@ const quizResponseSchema = {
   required: ['title', 'description', 'topic', 'difficulty', 'timeLimit', 'questions'],
 };
 
+const flashcardResponseSchema = {
+  type: 'object',
+  properties: {
+    topic: { type: 'string' },
+    flashcards: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          front: { type: 'string' },
+          back: { type: 'string' },
+        },
+        required: ['front', 'back'],
+      },
+    },
+  },
+  required: ['topic', 'flashcards'],
+};
+
+const hintResponseSchema = {
+  type: 'object',
+  properties: {
+    hint: { type: 'string' },
+  },
+  required: ['hint'],
+};
+
+const explanationResponseSchema = {
+  type: 'object',
+  properties: {
+    explanation: { type: 'string' },
+  },
+  required: ['explanation'],
+};
+
+const similarQuestionResponseSchema = {
+  type: 'object',
+  properties: {
+    question: { type: 'string' },
+    options: {
+      type: 'array',
+      minItems: 4,
+      maxItems: 4,
+      items: { type: 'string' },
+    },
+    correctAnswer: { type: 'integer', minimum: 0, maximum: 3 },
+    explanation: { type: 'string' },
+  },
+  required: ['question', 'options', 'correctAnswer', 'explanation'],
+};
+
 function validateGeneratedQuiz(quiz) {
   if (!quiz.questions?.length) {
     throw new Error('AI returned no questions');
@@ -292,6 +343,111 @@ const TOPIC_KNOWLEDGE_BASE = {
       explanation: 'The GIL in CPython synchronizes thread execution so that only one native thread executes Python bytecode at once, protecting Python memory management.',
     },
   ],
+  'react hooks': [
+    {
+      question: 'Which Hook is best used for subscribing to an external data source in React 18?',
+      options: [
+        'useSyncExternalStore',
+        'useEffect',
+        'useLayoutEffect',
+        'useMemo',
+      ],
+      correctAnswer: 0,
+      explanation: 'useSyncExternalStore is the recommended Hook for reading and subscribing from external data sources in a way that is compatible with concurrent rendering features.',
+    },
+    {
+      question: 'Why should you generally avoid calling Hooks inside conditionals or loops?',
+      options: [
+        'It violates the Rules of Hooks, causing React to lose track of the state of the component between renders.',
+        'It slows down the compilation of JSX to regular JavaScript.',
+        'Conditionals inside hooks will cause an immediate infinite render loop.',
+        'It triggers an unhandled promise rejection in strict mode.',
+      ],
+      correctAnswer: 0,
+      explanation: 'React relies on the order in which Hooks are called. If Hooks are inside conditionals, the order might change, leading to bugs where React associates the wrong state with a Hook.',
+    },
+    {
+      question: 'What is the primary difference between useLayoutEffect and useEffect?',
+      options: [
+        'useLayoutEffect runs synchronously immediately after DOM mutations, while useEffect runs asynchronously after paint.',
+        'useEffect is executed during Server-Side Rendering (SSR), while useLayoutEffect is not.',
+        'useLayoutEffect can only be used in class components.',
+        'useLayoutEffect takes precedence in resolving Promises over useEffect.',
+      ],
+      correctAnswer: 0,
+      explanation: 'useLayoutEffect fires synchronously after all DOM mutations but before the browser has a chance to paint, making it suitable for reading layout from the DOM and synchronously re-rendering.',
+    }
+  ],
+  'graphs in dsa': [
+    {
+      question: 'Which algorithm is best suited for finding the shortest path in a weighted graph with non-negative edge weights?',
+      options: [
+        'Dijkstra\'s Algorithm',
+        'Breadth-First Search (BFS)',
+        'Depth-First Search (DFS)',
+        'Kruskal\'s Algorithm',
+      ],
+      correctAnswer: 0,
+      explanation: 'Dijkstra\'s algorithm calculates the shortest path from a starting node to all other nodes in a graph with non-negative edge weights.',
+    },
+    {
+      question: 'What is the time complexity of Breadth-First Search (BFS) on a graph represented using an adjacency list?',
+      options: [
+        'O(V + E)',
+        'O(V^2)',
+        'O(E^2)',
+        'O(V log E)',
+      ],
+      correctAnswer: 0,
+      explanation: 'BFS visits every vertex (V) and explores every edge (E) once when using an adjacency list, resulting in a time complexity of O(V + E).',
+    },
+    {
+      question: 'Which graph traversal algorithm uses a stack (either explicitly or via the call stack) for its implementation?',
+      options: [
+        'Depth-First Search (DFS)',
+        'Breadth-First Search (BFS)',
+        'Prim\'s Algorithm',
+        'Topological Sort',
+      ],
+      correctAnswer: 0,
+      explanation: 'DFS explores as far as possible along each branch before backtracking, naturally aligning with the LIFO behavior of a stack.',
+    }
+  ],
+  'node.js streams': [
+    {
+      question: 'Which stream method allows you to connect a readable stream directly to a writable stream?',
+      options: [
+        '.pipe()',
+        '.flow()',
+        '.connect()',
+        '.write()',
+      ],
+      correctAnswer: 0,
+      explanation: 'The .pipe() method automatically handles the flow of data from a readable stream to a writable stream, taking care of backpressure and closing the stream properly.',
+    },
+    {
+      question: 'What is the primary advantage of using Streams in Node.js when processing large files?',
+      options: [
+        'They process data in chunks without loading the entire file into memory.',
+        'They automatically encrypt the data during transit.',
+        'They execute the file processing on multiple threads simultaneously.',
+        'They bypass the Node.js event loop completely.',
+      ],
+      correctAnswer: 0,
+      explanation: 'Streams read and write data in manageable chunks, meaning memory usage remains low even when processing files that are gigabytes in size.',
+    },
+    {
+      question: 'What type of stream is a TCP socket in the Node.js `net` module?',
+      options: [
+        'Duplex',
+        'Readable',
+        'Writable',
+        'Transform',
+      ],
+      correctAnswer: 0,
+      explanation: 'A TCP socket is a Duplex stream, meaning it implements both the Readable and Writable interfaces, allowing data to be both sent and received.',
+    }
+  ],
 };
 
 /**
@@ -436,7 +592,12 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: systemInstruction }, { text: userPrompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: flashcardResponseSchema,
+          thinkingConfig: { thinkingLevel: 'low' },
+          temperature: 0.7,
+        },
       }),
     });
     if (!res.ok) throw new Error(`Gemini API error (${res.status})`);
@@ -537,33 +698,13 @@ const generateDocumentWithExternalAI = async (
   // Truncate document to avoid hitting token context limits (approx 12,000 characters)
   const truncatedText = documentText.length > 12000 ? documentText.slice(0, 12000) + '...[truncated]' : documentText;
 
-  const systemInstruction = `You are an expert technical educator and psychometric test developer.
-Your task is to analyze the provided document text and generate an accurate assessment quiz in strict JSON format.
-Every question and answer MUST be directly verifiable from the provided document text.
-
-Strict JSON format requirements:
-{
-  "title": "Clear, engaging title based on document (max 80 chars)",
-  "description": "Summary of document contents and quiz scope (max 300 chars)",
-  "topic": "${cleanDocName.slice(0, 40).toLowerCase().trim()}",
-  "difficulty": "${difficulty}",
-  "timeLimit": ${Math.max(5, numberOfQuestions * 2)},
-  "questions": [
-    {
-      "question": "Clear, technically accurate question prompt directly derived from the document",
-      "options": [
-        "Option 1",
-        "Option 2",
-        "Option 3",
-        "Option 4"
-      ],
-      "correctAnswer": 0,
-      "explanation": "Detailed explanation citing the relevant fact or section in the document text."
-    }
-  ]
-}
-Each question MUST have exactly 4 options. "correctAnswer" must be the 0-indexed integer (0, 1, 2, or 3).
-Do NOT wrap the JSON in Markdown fences. Output strictly valid JSON.`;
+  const systemInstruction = `You are an expert technical educator and psychometric test developer. Your task is to analyze the provided document text and generate an accurate assessment quiz. Requirements:
+- Test understanding based ONLY on the document.
+- Exactly 4 options per question.
+- Exactly 1 correct answer.
+- Explanations must cite the relevant fact or section in the document text.
+- Match the requested difficulty.
+- Never invent facts.`;
 
   const userPrompt = `Document: "${filename}"
 Difficulty: ${difficulty}
@@ -589,6 +730,10 @@ ${truncatedText}`;
         ],
         generationConfig: {
           responseMimeType: 'application/json',
+          responseSchema: quizResponseSchema,
+          thinkingConfig: {
+            thinkingLevel: difficulty === 'hard' ? 'high' : 'medium',
+          },
           temperature: 0.5,
         },
       }),
@@ -600,10 +745,9 @@ ${truncatedText}`;
     }
 
     const data = await res.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error('No completion text returned from Gemini API');
-
-    return JSON.parse(rawText);
+    const parsedQuiz = JSON.parse(rawText);
+    validateGeneratedQuiz(parsedQuiz);
+    return parsedQuiz;
   } else {
     // OpenAI compatible endpoint
     const url = 'https://api.openai.com/v1/chat/completions';
@@ -631,7 +775,9 @@ ${truncatedText}`;
 
     const data = await res.json();
     const rawText = data?.choices?.[0]?.message?.content;
-    return JSON.parse(rawText);
+    const parsedQuiz = JSON.parse(rawText);
+    validateGeneratedQuiz(parsedQuiz);
+    return parsedQuiz;
   }
 };
 
@@ -904,7 +1050,12 @@ Options: ${JSON.stringify(options || [])}`;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: systemInstruction }, { text: userPrompt }] }],
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.6 },
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: hintResponseSchema,
+              thinkingConfig: { thinkingLevel: 'low' },
+              temperature: 0.6,
+            },
           }),
         });
 
@@ -999,7 +1150,12 @@ User Selected Index: ${selectedOption ?? 'None'} (${options?.[selectedOption] ||
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: systemInstruction }, { text: userPrompt }] }],
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.5 },
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: explanationResponseSchema,
+              thinkingConfig: { thinkingLevel: 'medium' },
+              temperature: 0.5,
+            },
           }),
         });
 
@@ -1084,7 +1240,12 @@ Original Question to Mirror: "${question}"`;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: systemInstruction }, { text: userPrompt }] }],
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: similarQuestionResponseSchema,
+              thinkingConfig: { thinkingLevel: 'medium' },
+              temperature: 0.7,
+            },
           }),
         });
 
