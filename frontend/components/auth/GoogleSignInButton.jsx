@@ -181,7 +181,7 @@ export function GoogleSignInButton({
       <div ref={googleBtnRef} className="hidden" />
 
       {/* Developer / Demo Mode Google Sign-In Modal */}
-      {showDevModal && (
+      {showDevModal && process.env.NODE_ENV !== 'production' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 text-left relative">
             <button
