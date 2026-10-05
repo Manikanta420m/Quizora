@@ -108,7 +108,7 @@ export const getSimilarQuestion = async (req, res, next) => {
  */
 export const generateWeakPractice = async (req, res, next) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?._id || req.user?.id;
     const { weakTopics, difficulty, numberOfQuestions } = req.body;
 
     const quiz = await aiService.generateWeakTopicPractice(userId, {

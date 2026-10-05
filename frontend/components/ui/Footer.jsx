@@ -71,7 +71,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/quizzes/generate" className="hover:text-[#2563EB] transition-colors flex items-center gap-1">
+                <Link href="/dashboard?tab=generate" className="hover:text-[#2563EB] transition-colors flex items-center gap-1">
                   <span>Quiz Generator</span>
                   <Sparkles className="w-3 h-3 text-[#38BDF8]" />
                 </Link>

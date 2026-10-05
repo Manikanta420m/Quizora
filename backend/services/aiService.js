@@ -859,6 +859,33 @@ const generateProceduralQuizFromDocument = (
 };
 
 /**
+ * Utility: Randomly shuffles the options of each question and updates the correctAnswer index
+ */
+const shuffleQuizOptions = (quizData) => {
+  if (!quizData || !Array.isArray(quizData.questions)) return quizData;
+  quizData.questions = quizData.questions.map(q => {
+    if (!Array.isArray(q.options) || q.correctAnswer === undefined || q.correctAnswer === null) return q;
+    
+    const optionsWithIndex = q.options.map((opt, i) => ({ text: opt, originalIndex: i }));
+    
+    // Fisher-Yates shuffle
+    for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+    }
+    
+    const newCorrectIndex = optionsWithIndex.findIndex(o => o.originalIndex === q.correctAnswer);
+    
+    return {
+      ...q,
+      options: optionsWithIndex.map(o => o.text),
+      correctAnswer: newCorrectIndex !== -1 ? newCorrectIndex : 0
+    };
+  });
+  return quizData;
+};
+
+/**
  * Main AI Quiz Generator Service
  * Generates structured questions and saves the resulting quiz
  */
@@ -907,7 +934,12 @@ export const generateAndSaveQuiz = async (userId, params) => {
     generatedData.timeLimit = timeLimit || Math.max(5, numberOfQuestions * 2);
   }
 
-  // 3. Ensure valid schema with Zod
+  // 3. Shuffle options to prevent correct answer from always being Option A
+  if (generatedData) {
+    generatedData = shuffleQuizOptions(generatedData);
+  }
+
+  // 4. Ensure valid schema with Zod
   const validatedPayload = createQuizSchema.parse(generatedData);
 
   // 4. Save to database / store using quizService
@@ -975,7 +1007,12 @@ export const generateQuizFromDocument = async (userId, docData, params) => {
     );
   }
 
-  // 3. Validate quiz payload
+  // 3. Shuffle options to prevent correct answer from always being Option A
+  if (generatedData) {
+    generatedData = shuffleQuizOptions(generatedData);
+  }
+
+  // 4. Validate quiz payload
   const validatedPayload = createQuizSchema.parse(generatedData);
 
   // 4. Save to database / in-memory store

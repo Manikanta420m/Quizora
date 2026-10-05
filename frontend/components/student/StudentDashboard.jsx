@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   Sparkles,
@@ -59,8 +59,21 @@ export default function StudentDashboard({
   isGeneratingWeakPractice,
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Read initial tab from URL or default to 'dashboard'
+  const initialTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Keep tab in sync with URL changes
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -553,7 +566,7 @@ export default function StudentDashboard({
           )}
 
           {activeTab === 'quizzes' && (
-            <StudentQuizzes />
+            <StudentQuizzes onNavigateTab={setActiveTab} />
           )}
 
           {activeTab === 'flashcards' && (

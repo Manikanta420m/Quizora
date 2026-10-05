@@ -24,7 +24,7 @@ import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 
-export default function StudentQuizzes() {
+export default function StudentQuizzes({ onNavigateTab }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
@@ -83,7 +83,7 @@ export default function StudentQuizzes() {
         <Button
           variant="primary"
           size="sm"
-          onClick={() => router.push('/quizzes/generate')}
+          onClick={() => onNavigateTab ? onNavigateTab('generate') : router.push('/dashboard')}
           className="gap-1.5 text-xs bg-gradient-to-r from-[#2563EB] to-[#38BDF8] shadow-md cursor-pointer self-start sm:self-auto"
         >
           <Sparkles className="w-3.5 h-3.5" />

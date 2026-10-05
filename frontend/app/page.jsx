@@ -69,7 +69,7 @@ export default function HomePage() {
       count: quickQuestions,
       type: quickType.toLowerCase(),
     });
-    router.push(`/quizzes/generate?${params.toString()}`);
+    router.push(`/dashboard?tab=generate&${params.toString()}`);
   };
 
   // Section 8 & 9: Interactive Quiz Preview State
@@ -201,7 +201,7 @@ export default function HomePage() {
 
                 {/* Buttons: [ Generate Quiz → ] [ Explore Features ] */}
                 <div className="flex flex-wrap items-center gap-3.5 pt-2">
-                  <Link href="/quizzes/generate">
+                  <Link href="/dashboard?tab=generate">
                     <Button
                       variant="primary"
                       size="lg"
@@ -710,7 +710,7 @@ export default function HomePage() {
             </p>
 
             <div className="pt-2 flex justify-center">
-              <Link href="/quizzes/generate">
+              <Link href="/dashboard?tab=generate">
                 <Button
                   variant="primary"
                   size="lg"

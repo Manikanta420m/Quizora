@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -39,8 +39,14 @@ const difficultyBadgeVariant = {
 
 export default function QuizDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const quizId = params?.id;
+  
+  // Hard redirect for legacy /quizzes/generate bookmarks/links
+  if (quizId === 'generate') {
+    redirect('/dashboard?tab=generate');
+  }
+
+  const router = useRouter();
   const { user, token } = useAuth();
   const queryClient = useQueryClient();
 

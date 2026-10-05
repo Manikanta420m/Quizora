@@ -650,10 +650,11 @@ export default function StudentOverview({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => router.push('/quizzes/generate')}
+                onClick={() => onGenerateWeakPractice([rec.title])}
+                disabled={isGeneratingWeakPractice}
                 className="w-full text-xs gap-1.5 border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#2563EB] font-bold cursor-pointer"
               >
-                <span>Start Quiz</span>
+                <span>{isGeneratingWeakPractice ? 'Generating...' : 'Start Quiz'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Card>
@@ -896,7 +897,7 @@ export default function StudentOverview({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => router.push('/quizzes/generate')}
+                  onClick={() => router.push(`/quizzes/${sq.id || sq._id}/play`)}
                   className="text-xs text-[#2563EB] border-[#E2E8F0] hover:bg-white cursor-pointer"
                 >
                   Start Quiz
