@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
@@ -65,6 +66,8 @@ export const registerUser = async ({ name, email, password }) => {
     });
 
     const tokens = generateTokens(user);
+    user.refreshTokens = [crypto.createHash('sha256').update(tokens.refreshToken).digest('hex')];
+    await user.save();
     return { user: user.toSafeObject(), ...tokens };
   }
 
@@ -111,7 +114,7 @@ export const loginUser = async ({ email, password }) => {
 
   // 1. If MongoDB is connected
   if (isMongoConnected()) {
-    const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
+    const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash +refreshTokens');
     if (!user) {
       const error = new Error('Invalid email or password');
       error.statusCode = 401;
@@ -126,6 +129,10 @@ export const loginUser = async ({ email, password }) => {
     }
 
     const tokens = generateTokens(user);
+    // Keep max 5 active sessions
+    if (user.refreshTokens && user.refreshTokens.length > 5) user.refreshTokens.shift();
+    user.refreshTokens.push(crypto.createHash('sha256').update(tokens.refreshToken).digest('hex'));
+    await user.save();
     return { user: user.toSafeObject(), ...tokens };
   }
 
@@ -230,25 +237,43 @@ export const refreshAccessToken = async (refreshToken) => {
 
   try {
     const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
-    const user = await getUserById(decoded.id);
+    
+    if (isMongoConnected()) {
+      const user = await User.findById(decoded.id).select('+refreshTokens');
+      if (!user) throw new Error('User no longer exists');
 
-    if (!user) {
-      const error = new Error('User no longer exists');
-      error.statusCode = 401;
-      throw error;
+      const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+      const tokenIndex = user.refreshTokens ? user.refreshTokens.indexOf(hashedToken) : -1;
+
+      if (tokenIndex === -1) {
+        // SECURITY: Token reuse detected. Invalidate all sessions!
+        user.refreshTokens = [];
+        await user.save();
+        throw new Error('Refresh token reused or invalid');
+      }
+
+      // Remove the old used token
+      user.refreshTokens.splice(tokenIndex, 1);
+
+      // Generate new tokens
+      const payload = { id: user._id || user.id, email: user.email, role: user.role };
+      const newAccessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: '15m' });
+      const newRefreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+
+      // Add the new refresh token
+      user.refreshTokens.push(crypto.createHash('sha256').update(newRefreshToken).digest('hex'));
+      await user.save();
+
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken, user: user.toSafeObject() };
+    } else {
+      // Dev memory fallback
+      const user = devMemoryUsers.get(decoded.email);
+      if (!user) throw new Error('User no longer exists');
+      const payload = { id: user._id || user.id, email: user.email, role: user.role };
+      const newAccessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: '15m' });
+      const newRefreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken, user };
     }
-
-    const payload = {
-      id: user._id || user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const newAccessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-      expiresIn: '30d',
-    });
-
-    return { accessToken: newAccessToken, user };
   } catch (err) {
     const error = new Error('Invalid or expired refresh token');
     error.statusCode = 401;

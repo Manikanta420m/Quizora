@@ -59,6 +59,16 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Streak cannot be negative'],
     },
+    role: {
+      type: String,
+      enum: ['student', 'teacher', 'admin'],
+      default: 'student',
+    },
+    refreshTokens: {
+      type: [String],
+      default: [],
+      select: false,
+    },
   },
   {
     timestamps: true, // Automatically manages createdAt and updatedAt

@@ -105,8 +105,11 @@ export const logout = async (req, res) => {
  */
 export const refresh = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies?.refresh_token || req.body?.refreshToken;
-    const { accessToken, user } = await authService.refreshAccessToken(refreshToken);
+    const oldRefreshToken = req.cookies?.refresh_token || req.body?.refreshToken;
+    const { accessToken, refreshToken, user } = await authService.refreshAccessToken(oldRefreshToken);
+
+    // Set new secure HTTP-only refresh token cookie
+    res.cookie('refresh_token', refreshToken, getCookieOptions());
 
     res.status(200).json({
       success: true,
