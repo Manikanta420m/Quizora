@@ -18,6 +18,9 @@ import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 
+// Trust proxy for load balancers (required for rate limiters based on IP)
+app.set('trust proxy', 1);
+
 // 1. Security Middleware
 app.use(helmet());
 const allowedOrigins =

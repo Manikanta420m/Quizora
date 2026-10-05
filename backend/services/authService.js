@@ -282,26 +282,28 @@ export const refreshAccessToken = async (refreshToken) => {
       if (!user) throw new Error('User no longer exists');
 
       const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-      const tokenIndex = user.refreshTokens ? user.refreshTokens.indexOf(hashedToken) : -1;
-
-      if (tokenIndex === -1) {
-        // SECURITY: Token reuse detected. Invalidate all sessions!
-        user.refreshTokens = [];
-        await user.save();
-        throw new Error('Refresh token reused or invalid');
-      }
-
-      // Remove the old used token
-      user.refreshTokens.splice(tokenIndex, 1);
 
       // Generate new tokens
       const payload = { id: user._id || user.id, email: user.email, role: user.role };
       const newAccessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: '15m' });
       const newRefreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+      const newHashedToken = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
 
-      // Add the new refresh token
-      user.refreshTokens.push(crypto.createHash('sha256').update(newRefreshToken).digest('hex'));
-      await user.save();
+      // Atomically swap the old token for the new token to prevent concurrency races
+      const updateResult = await User.updateOne(
+        { _id: user._id, refreshTokens: hashedToken },
+        { 
+          $pull: { refreshTokens: hashedToken },
+          $push: { refreshTokens: newHashedToken }
+        }
+      );
+
+      // If the query didn't modify a document, the token wasn't found in the array!
+      if (updateResult.modifiedCount === 0) {
+        // SECURITY: Token reuse detected (or invalid token). Invalidate all sessions!
+        await User.updateOne({ _id: user._id }, { $set: { refreshTokens: [] } });
+        throw new Error('Refresh token reused or invalid');
+      }
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken, user: user.toSafeObject() };
     } else {

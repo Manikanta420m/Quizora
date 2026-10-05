@@ -98,12 +98,11 @@ userSchema.methods.toSafeObject = function () {
 };
 
 // Set default avatar based on name initials before saving
-userSchema.pre('save', function (next) {
+userSchema.pre('save', function () {
   if (!this.avatar) {
     const encodedName = encodeURIComponent(this.name);
     this.avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodedName}&backgroundColor=6366f1`;
-  }
-  next();
+ }
 });
 
 export const User = mongoose.models.User || mongoose.model('User', userSchema);

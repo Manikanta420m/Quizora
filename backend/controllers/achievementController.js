@@ -7,7 +7,8 @@ import logger from '../utils/logger.js';
  */
 export const getAchievements = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
+
     const data = await achievementService.getUserAchievements(userId);
 
     return res.status(200).json({
@@ -26,8 +27,12 @@ export const getAchievements = async (req, res, next) => {
  */
 export const evaluateAchievements = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const newlyUnlocked = await achievementService.evaluateUserAchievements(userId, req.body || {});
+    const userId = req.user._id || req.user.id;
+
+    const newlyUnlocked = await achievementService.evaluateUserAchievements(
+      userId,
+      req.body || {}
+    );
 
     return res.status(200).json({
       success: true,

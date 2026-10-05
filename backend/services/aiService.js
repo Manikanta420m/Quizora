@@ -3,6 +3,148 @@ import logger from '../utils/logger.js';
 import quizService from './quizService.js';
 import { createQuizSchema } from '../validators/quizValidators.js';
 
+// ============================================================
+// AI CONFIGURATION
+// ============================================================
+
+const GEMINI_MODEL = 'gemini-3.8-flash';
+
+const GEMINI_BASE_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models';
+
+const getGeminiUrl = (apiKey) =>
+  `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+// ============================================================
+// AI SCHEMAS & SEMANTIC VALIDATION
+// ============================================================
+
+const quizResponseSchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    description: { type: 'string' },
+    topic: { type: 'string' },
+    difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+    timeLimit: { type: 'integer' },
+    questions: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        properties: {
+          question: { type: 'string' },
+          options: {
+            type: 'array',
+            minItems: 4,
+            maxItems: 4,
+            items: { type: 'string' },
+          },
+          correctAnswer: { type: 'integer', minimum: 0, maximum: 3 },
+          explanation: { type: 'string' },
+        },
+        required: ['question', 'options', 'correctAnswer', 'explanation'],
+      },
+    },
+  },
+  required: ['title', 'description', 'topic', 'difficulty', 'timeLimit', 'questions'],
+};
+
+function validateGeneratedQuiz(quiz) {
+  if (!quiz.questions?.length) {
+    throw new Error('AI returned no questions');
+  }
+  for (const q of quiz.questions) {
+    if (q.options.length !== 4) {
+      throw new Error('Question must have exactly 4 options');
+    }
+    if (q.correctAnswer < 0 || q.correctAnswer > 3) {
+      throw new Error('Invalid correct answer index');
+    }
+    if (new Set(q.options.map((o) => o.trim().toLowerCase())).size !== 4) {
+      throw new Error('Duplicate options detected');
+    }
+    if (!q.explanation?.trim()) {
+      throw new Error('Missing explanation');
+    }
+  }
+  return true;
+}
+
+// ============================================================
+// AI RETRY CONFIGURATION
+// ============================================================
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const RETRYABLE_STATUS_CODES = new Set([
+  408,
+  429,
+  500,
+  502,
+  503,
+  504,
+]);
+
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let response;
+
+    try {
+      response = await fetch(url, options);
+    } catch (error) {
+      // Network error
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+
+      const delay =
+        1000 * 2 ** attempt +
+        Math.floor(Math.random() * 500);
+
+      logger.warn(
+        `AI API network error. Retry ${attempt + 1}/${maxRetries} in ${delay}ms`
+      );
+
+      await sleep(delay);
+      continue;
+    }
+
+    // Successful response
+    if (response.ok) {
+      return response;
+    }
+
+    const errorText = await response.text();
+
+    // Don't retry permanent errors such as 400/401/403/404
+    if (
+      !RETRYABLE_STATUS_CODES.has(response.status) ||
+      attempt >= maxRetries
+    ) {
+      const error = new Error(
+        `AI API error (${response.status}): ${errorText}`
+      );
+
+      error.status = response.status;
+
+      throw error;
+    }
+
+    // Exponential backoff + jitter, or respect Retry-After
+    const retryAfter = response.headers.get('retry-after');
+    const delay = retryAfter 
+      ? Number(retryAfter) * 1000 
+      : 1000 * 2 ** attempt + Math.floor(Math.random() * 500);
+
+    logger.warn(
+      `AI API ${response.status}. Retry ${attempt + 1}/${maxRetries} in ${delay}ms`
+    );
+
+    await sleep(delay);
+  }
+}
+
 /**
  * Procedural Knowledge Base for Zero-Config Fallback Generation
  * Generates verified, curriculum-grade questions when external AI APIs are not configured.
@@ -178,33 +320,16 @@ const buildProceduralQuestion = (topic, difficulty, index) => {
 const generateWithExternalAI = async (apiKey, topic, difficulty, numberOfQuestions, customInstructions) => {
   const isGemini = apiKey.startsWith('AIza') || !apiKey.startsWith('sk-');
 
-  const systemInstruction = `You are a Senior Software Architect and Master Technical Educator.
-Your task is to generate a comprehensive, high-quality assessment quiz in valid JSON.
-The quiz must evaluate real-world engineering knowledge, practical scenarios, and common misconceptions.
-
-Strict JSON format requirements:
-{
-  "title": "Clear, engaging quiz title (max 80 chars)",
-  "description": "2-3 sentences explaining learning outcomes and scope (max 300 chars)",
-  "topic": "${topic.toLowerCase().trim()}",
-  "difficulty": "${difficulty}",
-  "timeLimit": ${Math.max(5, numberOfQuestions * 2)},
-  "questions": [
-    {
-      "question": "Clear, technically accurate question prompt",
-      "options": [
-        "First option",
-        "Second option",
-        "Third option",
-        "Fourth option"
-      ],
-      "correctAnswer": 0,
-      "explanation": "In-depth educational explanation clarifying why the answer is correct and why other options are suboptimal."
-    }
-  ]
-}
-Each question MUST have exactly 4 options. "correctAnswer" must be the 0-indexed integer (0, 1, 2, or 3).
-Do NOT wrap the JSON in Markdown code fences if possible, or return strictly valid JSON.`;
+  const systemInstruction = `You are an expert Computer Science educator. Generate a high-quality multiple-choice quiz about the requested topic. Requirements:
+- Test understanding, not memorization.
+- Include realistic engineering scenarios where appropriate.
+- Avoid ambiguous questions.
+- Exactly 4 options per question.
+- Exactly 1 correct answer.
+- Explanations must teach why the answer is correct.
+- Distractors must be plausible but technically wrong.
+- Match the requested difficulty.
+- Never invent facts.`;
 
   const userPrompt = `Topic: ${topic}
 Difficulty: ${difficulty}
@@ -212,8 +337,8 @@ Total Questions: ${numberOfQuestions}
 ${customInstructions ? `Additional focus instructions: ${customInstructions}` : ''}`;
 
   if (isGemini) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
+    const url = getGeminiUrl(apiKey);
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -227,7 +352,10 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
         ],
         generationConfig: {
           responseMimeType: 'application/json',
-          temperature: 0.7,
+          responseSchema: quizResponseSchema,
+          thinkingConfig: {
+            thinkingLevel: difficulty === 'hard' ? 'high' : 'medium',
+          },
         },
       }),
     });
@@ -241,7 +369,9 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) throw new Error('No completion text returned from Gemini API');
 
-    return JSON.parse(rawText);
+    const parsedQuiz = JSON.parse(rawText);
+    validateGeneratedQuiz(parsedQuiz);
+    return parsedQuiz;
   } else {
     // OpenAI compatible endpoint
     const url = 'https://api.openai.com/v1/chat/completions';
@@ -269,7 +399,9 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
 
     const data = await res.json();
     const rawText = data?.choices?.[0]?.message?.content;
-    return JSON.parse(rawText);
+    const parsedQuiz = JSON.parse(rawText);
+    validateGeneratedQuiz(parsedQuiz);
+    return parsedQuiz;
   }
 };
 
@@ -298,8 +430,8 @@ Total Flashcards: ${numberOfCards}
 ${customInstructions ? `Additional focus instructions: ${customInstructions}` : ''}`;
 
   if (isGemini) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
+    const url = getGeminiUrl(apiKey);
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -442,8 +574,8 @@ Document Content:
 ${truncatedText}`;
 
   if (isGemini) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
+    const url = getGeminiUrl(apiKey);
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -611,7 +743,7 @@ export const generateAndSaveQuiz = async (userId, params) => {
         sourceType: 'ai',
         sourceMetadata: {
           provider: apiKey.startsWith('AIza') ? 'google-gemini' : 'openai',
-          model: apiKey.startsWith('AIza') ? 'gemini-1.5-flash' : 'gpt-4o-mini',
+          model: apiKey.startsWith('AIza') ? GEMINI_MODEL : 'gpt-4o-mini',
           generatedAt: new Date().toISOString(),
         },
       };
@@ -669,7 +801,7 @@ export const generateQuizFromDocument = async (userId, docData, params) => {
         sourceType: 'pdf',
         sourceMetadata: {
           provider: apiKey.startsWith('AIza') ? 'google-gemini' : 'openai',
-          model: apiKey.startsWith('AIza') ? 'gemini-1.5-flash' : 'gpt-4o-mini',
+          model: apiKey.startsWith('AIza') ? GEMINI_MODEL : 'gpt-4o-mini',
           filename,
           wordCount,
           pageCount,
@@ -766,8 +898,8 @@ Question: "${question}"
 Options: ${JSON.stringify(options || [])}`;
 
       if (isGemini) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
+        const url = getGeminiUrl(apiKey);
+        const res = await fetchWithRetry(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -861,8 +993,8 @@ Correct Option Index: ${correctAnswer} (${options?.[correctAnswer] || ''})
 User Selected Index: ${selectedOption ?? 'None'} (${options?.[selectedOption] || 'None'})`;
 
       if (isGemini) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
+        const url = getGeminiUrl(apiKey);
+        const res = await fetchWithRetry(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -946,8 +1078,8 @@ Difficulty: ${difficulty}
 Original Question to Mirror: "${question}"`;
 
       if (isGemini) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
+        const url = getGeminiUrl(apiKey);
+        const res = await fetchWithRetry(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

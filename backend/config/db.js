@@ -14,7 +14,7 @@ const connectionStates = {
  */
 // Setup connection event listeners once
 mongoose.connection.on('connected', () => {
-  logger.success(`MongoDB connected to: ${mongoose.connection.host}/${mongoose.connection.name}`);
+  logger.success(`MongoDB connected successfully`);
 });
 
 mongoose.connection.on('error', (err) => {
@@ -38,7 +38,7 @@ mongoose.connection.on('disconnected', () => {
  */
 export const connectDB = async () => {
   try {
-    logger.info(`Connecting to MongoDB at: ${env.MONGODB_URI}...`);
+    logger.info(`Connecting to MongoDB ...`);
     await mongoose.connect(env.MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
     });
