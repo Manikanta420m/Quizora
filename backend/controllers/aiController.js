@@ -1,4 +1,5 @@
 import aiService from '../services/aiService.js';
+import { getQuizById } from '../services/quizService.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -33,21 +34,31 @@ export const getHint = async (req, res, next) => {
  */
 export const getExplanation = async (req, res, next) => {
   try {
-    const { question, options, correctAnswer, selectedOption, topic } = req.body;
+    const { quizId, questionIndex, selectedOption } = req.body;
 
-    if (!question || options === undefined) {
+    if (!quizId || questionIndex === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Question and options are required to generate an explanation',
+        message: 'quizId and questionIndex are required to generate an explanation',
       });
     }
 
+    const quiz = await getQuizById(quizId);
+    if (!quiz || !quiz.questions || !quiz.questions[questionIndex]) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quiz or question not found',
+      });
+    }
+
+    const qItem = quiz.questions[questionIndex];
+
     const result = await aiService.explainConcept({
-      question,
-      options,
-      correctAnswer: Number(correctAnswer),
+      question: qItem.question,
+      options: qItem.options,
+      correctAnswer: qItem.correctAnswer,
       selectedOption: selectedOption !== undefined && selectedOption !== null ? Number(selectedOption) : null,
-      topic,
+      topic: quiz.topic,
     });
 
     return res.status(200).json({

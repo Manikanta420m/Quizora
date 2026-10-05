@@ -128,8 +128,12 @@ export function GoogleSignInButton({
       return;
     }
 
-    // Otherwise, open sleek Dev/Demo Google Sign-In helper modal
-    setShowDevModal(true);
+    // Otherwise, open sleek Dev/Demo Google Sign-In helper modal (DEV ONLY)
+    if (process.env.NODE_ENV !== 'production') {
+      setShowDevModal(true);
+    } else {
+      onError?.('Google authentication is not configured for this production environment.');
+    }
   };
 
   // Execute dev-simulated Google Sign-In

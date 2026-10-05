@@ -20,9 +20,14 @@ const app = express();
 
 // 1. Security Middleware
 app.use(helmet());
+const allowedOrigins =
+  env.NODE_ENV === 'production'
+    ? [env.CLIENT_URL]
+    : [env.CLIENT_URL, 'http://localhost:3000'];
+
 app.use(
   cors({
-    origin: [env.CLIENT_URL, 'http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
