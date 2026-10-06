@@ -53,6 +53,8 @@ export function GoogleSignInButton({
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+
   // Handle GIS credential callback
   const handleGoogleCredentialResponse = useCallback(
     async (response) => {
@@ -87,16 +89,18 @@ export function GoogleSignInButton({
         callback: handleGoogleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: false, // Helps mitigate local dev network errors
       });
 
       if (googleBtnRef.current) {
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'outline',
           size: 'large',
-          width: '100%',
+          width: 250, // Fixed width for better consistency
           text: mode === 'signup' ? 'signup_with' : 'signin_with',
           shape: 'pill',
         });
+        setIsGoogleReady(true);
       }
     };
 
@@ -118,17 +122,9 @@ export function GoogleSignInButton({
     }
   }, [googleClientId, mode, handleGoogleCredentialResponse]);
 
-  // Button click trigger
+  // Button click trigger (Only used for Dev Mode when Native Google button isn't active)
   const handleClick = () => {
     playSound('click');
-
-    // If real Google Client ID is configured and GIS is ready, trigger prompt
-    if (googleClientId && window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-      return;
-    }
-
-    // Otherwise, open sleek Dev/Demo Google Sign-In helper modal (DEV ONLY)
     if (process.env.NODE_ENV !== 'production') {
       setShowDevModal(true);
     } else {
@@ -158,27 +154,29 @@ export function GoogleSignInButton({
     mode === 'signup'
       ? 'Sign up with Google'
       : mode === 'signin'
-      ? 'Sign in with Google'
-      : 'Continue with Google';
+        ? 'Sign in with Google'
+        : 'Continue with Google';
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isLoading}
-        className={`w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-[#F8FAFC] dark:hover:bg-[#334155]/60 text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm transition-all duration-200 shadow-2xs hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
-      >
-        {isLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin text-[#2563EB]" />
-        ) : (
-          <GoogleIcon className="w-5 h-5 shrink-0" />
-        )}
-        <span>{isLoading ? 'Connecting to Google...' : buttonText}</span>
-      </button>
+    <div className="w-full flex justify-center">
+      {!isGoogleReady && (
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={isLoading}
+          className={`w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-[#F8FAFC] dark:hover:bg-[#334155]/60 text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm transition-all duration-200 shadow-2xs hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-[#2563EB]" />
+          ) : (
+            <GoogleIcon className="w-5 h-5 shrink-0" />
+          )}
+          <span>{isLoading ? 'Connecting to Google...' : buttonText}</span>
+        </button>
+      )}
 
-      {/* Hidden container for native Google rendered button if client ID is active */}
-      <div ref={googleBtnRef} className="hidden" />
+      {/* Container for native Google rendered button */}
+      <div ref={googleBtnRef} className={!isGoogleReady ? 'hidden' : 'flex justify-center w-full'} />
 
       {/* Developer / Demo Mode Google Sign-In Modal */}
       {showDevModal && process.env.NODE_ENV !== 'production' && (
@@ -257,7 +255,7 @@ export function GoogleSignInButton({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
