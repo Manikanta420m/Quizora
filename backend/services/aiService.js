@@ -645,29 +645,13 @@ ${customInstructions ? `Additional focus instructions: ${customInstructions}` : 
  * Procedural fallback for Flashcards
  */
 const generateProceduralFlashcards = (topic, numberOfCards) => {
-  const normalizedTopic = topic.toLowerCase().trim();
   const capTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
-  const existingQuestions = TOPIC_KNOWLEDGE_BASE[normalizedTopic] || [];
-  
-  const flashcards = [];
-  
-  for (let i = 0; i < numberOfCards; i++) {
-    if (i < existingQuestions.length) {
-      flashcards.push({
-        front: existingQuestions[i].question,
-        back: existingQuestions[i].explanation,
-      });
-    } else {
-      flashcards.push({
-        front: `What is a core architectural principle of ${capTopic} (Part ${i + 1})?`,
-        back: `A foundational approach in ${capTopic} emphasizing modularity, predictable data flow, and optimal performance.`,
-      });
-    }
-  }
-
   return {
     topic: capTopic,
-    flashcards,
+    flashcards: Array.from({ length: numberOfCards }).map((_, i) => ({
+      front: `${capTopic} Concept ${i + 1}`,
+      back: `This is the procedural definition for ${capTopic} concept ${i + 1}.`,
+    })),
   };
 };
 

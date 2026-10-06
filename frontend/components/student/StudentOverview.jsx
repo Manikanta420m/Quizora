@@ -40,6 +40,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { useQuery } from '@tanstack/react-query';
 import quizService from '@/services/quizService';
+import leaderboardService from '@/services/leaderboardService';
 import { useAuth } from '@/context/AuthContext';
 
 export default function StudentOverview({
@@ -209,13 +210,33 @@ export default function StudentOverview({
     },
   ];
 
-  // Weekly Leaderboard snippet
-  const weeklyLeaderboard = [
-    { rank: 1, medal: '🥇', name: 'Kalyani', xp: 1240, score: 94, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
-    { rank: 2, medal: '🥈', name: 'Teja', xp: 1180, score: 91, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
-    { rank: 3, medal: '🥉', name: 'Vasundhara', xp: 1105, score: 89, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80' },
-    { rank: 4, medal: '4', name: user?.name || 'ManiKanta', xp: 1050, score: 87, isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
+  const { data: leaderboardData } = useQuery({
+    queryKey: ['globalLeaderboard', 'weekly'],
+    queryFn: () => leaderboardService.getLeaderboard({ limit: 4 }),
+    staleTime: 1000 * 30, // 30 seconds
+  });
+
+  const apiRankings = leaderboardData?.leaderboard || [];
+  
+  const fallbackLeaderboard = [
+    { rank: 1, medal: '🥇', name: 'Ananya', xp: 1240, score: 94, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+    { rank: 2, medal: '🥈', name: 'Rahul', xp: 1180, score: 91, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
+    { rank: 3, medal: '🥉', name: 'Priya', xp: 1105, score: 89, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80' },
+    { rank: 4, medal: '4', name: user?.name || 'Mani', xp: 1050, score: 87, isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
   ];
+
+  const weeklyLeaderboard = apiRankings.length > 0
+    ? apiRankings.slice(0, 4).map((r, i) => ({
+        rank: r.rank || (i + 1),
+        medal: r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : String(r.rank || (i + 1)),
+        name: r.name,
+        xp: r.xp,
+        score: r.streak > 0 ? (r.streak * 10) : 0, // Fallback for score UI since API returns streak
+        avatar: r.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(r.name)}&backgroundColor=6366f1`,
+        isMe: r.userId === user?._id || r.userId === user?.id
+      }))
+    : fallbackLeaderboard;
+
 
   // Saved Quizzes
   const savedQuizzes = [

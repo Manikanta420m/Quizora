@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/context/AuthContext';
 import quizService from '@/services/quizService';
 import {
   BookOpen,
@@ -46,6 +47,8 @@ export default function StudentQuizzes({ onNavigateTab }) {
 
   const quizzes = quizzesResponse?.quizzes || [];
 
+  const { user } = useAuth();
+
   const handleShare = (quizId) => {
     const url = `${window.location.origin}/quizzes/${quizId}/play`;
     navigator.clipboard.writeText(url);
@@ -71,7 +74,11 @@ export default function StudentQuizzes({ onNavigateTab }) {
     if (filterTab === 'saved') {
       return savedQuizzes.has(quiz._id || quiz.id);
     }
-    return true;
+    
+    // For 'all' tab, only show quizzes created by the user
+    const authorId = quiz.userId?._id || quiz.userId?.id || quiz.userId;
+    const currentUserId = user?._id || user?.id;
+    return authorId && currentUserId && authorId === currentUserId;
   });
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
