@@ -58,33 +58,6 @@ export default function LoginPage() {
     }
   };
 
-  /**
-   * One-click demo login helper to quickly test the application
-   */
-  const handleQuickDemo = async () => {
-    setErrorMessage('');
-    setIsSubmitting(true);
-    const demoData = {
-      name: 'Demo User',
-      email: 'demo@example.com',
-      password: 'password123',
-    };
-
-    try {
-      // First attempt to login
-      try {
-        await login(demoData.email, demoData.password);
-      } catch (loginErr) {
-        // If user does not exist yet, auto-register the demo user!
-        await authRegister(demoData);
-      }
-      router.replace('/dashboard');
-    } catch (err) {
-      setErrorMessage(err.message || 'Failed to initialize demo session');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-auth-light text-[#111827] relative overflow-hidden">
@@ -122,23 +95,6 @@ export default function LoginPage() {
             <div className="border-t border-[#E2E8F0] w-full" />
           </div>
 
-          {/* Quick Demo Login Bar */}
-          <div className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-[#1E40AF]">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span>One-Click Demo Account</span>
-              </div>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleQuickDemo}
-                className="px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] border border-[#2563EB] text-xs font-medium text-white transition-colors shadow-sm cursor-pointer"
-              >
-                Sign in as Demo
-              </button>
-            </div>
-          </div>
 
           {errorMessage && (
             <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] flex items-start gap-2.5 text-xs text-[#EF4444]">
