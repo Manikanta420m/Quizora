@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from './Button';
-import ThemeSwitch from './ThemeSwitch';
 import { motion } from 'framer-motion';
 
 /**
@@ -144,10 +143,8 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Right Section: Theme Toggle & Login / [Get Started] */}
+        {/* Right Section: Login / [Get Started] */}
         <div className="flex items-center gap-4">
-          {/* Dark / Light Mode Switch */}
-          <ThemeSwitch size="sm" />
 
           {isAuthenticated ? (
             <div className="hidden sm:flex items-center gap-3">

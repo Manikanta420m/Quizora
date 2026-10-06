@@ -36,15 +36,9 @@ function subscribeToTheme(callback) {
 }
 
 function getThemeSnapshot() {
-  if (typeof window === 'undefined') return 'light';
-  try {
-    const saved = localStorage.getItem('quizora-theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  } catch (_) {
-    return 'light';
+  return 'light';
   }
-}
+
 
 function getServerSnapshot() {
   return 'light';

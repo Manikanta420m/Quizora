@@ -33,7 +33,6 @@ import {
   Swords
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import ThemeSwitch from '@/components/ui/ThemeSwitch';
 import StudentOverview from './StudentOverview';
 import StudentQuizzes from './StudentQuizzes';
 import StudentPractice from './StudentPractice';
@@ -438,9 +437,6 @@ export default function StudentDashboard({
                 </div>
               )}
             </div>
-
-            {/* Theme Toggle (Module 20) */}
-            <ThemeSwitch />
 
             {/* User Profile */}
             <div className="flex items-center gap-2 pl-2 border-l border-[#E2E8F0]">
