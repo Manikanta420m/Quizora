@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, token, isAuthenticated } = useAuth();
-  const [isGeneratingWeakPractice, setIsGeneratingWeakPractice] = useState(false);
+  const [generatingTopicId, setGeneratingTopicId] = useState(null);
 
   // Fetch real performance analytics
   const { data: analyticsResponse } = useQuery({
@@ -42,9 +42,9 @@ export default function DashboardPage() {
   });
 
   // One-Click Adaptive Practice Generator
-  const handleGenerateWeakPractice = async (specificTopics) => {
-    if (isGeneratingWeakPractice) return;
-    setIsGeneratingWeakPractice(true);
+  const handleGenerateWeakPractice = async (specificTopics, id = 'global') => {
+    if (generatingTopicId) return;
+    setGeneratingTopicId(id);
     try {
       const weakTopics = analyticsResponse?.data?.weakTopics || [];
       const topics = specificTopics || (weakTopics.length > 0 ? weakTopics.map((w) => w.topic) : ['javascript', 'react']);
@@ -64,7 +64,7 @@ export default function DashboardPage() {
     } catch (err) {
       alert(err.message || 'Failed to generate remedial practice quiz');
     } finally {
-      setIsGeneratingWeakPractice(false);
+      setGeneratingTopicId(null);
     }
   };
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
         myRankData={myRankResponse?.data}
         achievementsData={achievementsResponse?.data}
         onGenerateWeakPractice={handleGenerateWeakPractice}
-        isGeneratingWeakPractice={isGeneratingWeakPractice}
+        isGeneratingWeakPractice={generatingTopicId}
       />
     </ProtectedRoute>
   );

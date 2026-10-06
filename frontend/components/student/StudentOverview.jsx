@@ -650,11 +650,11 @@ export default function StudentOverview({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => onGenerateWeakPractice([rec.title])}
-                disabled={isGeneratingWeakPractice}
+                onClick={() => onGenerateWeakPractice([rec.title], rec.id)}
+                disabled={isGeneratingWeakPractice === rec.id || isGeneratingWeakPractice === 'global'}
                 className="w-full text-xs gap-1.5 border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#2563EB] font-bold cursor-pointer"
               >
-                <span>{isGeneratingWeakPractice ? 'Generating...' : 'Start Quiz'}</span>
+                <span>{isGeneratingWeakPractice === rec.id ? 'Generating...' : 'Start Quiz'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Card>
