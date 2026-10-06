@@ -24,7 +24,7 @@ Users can generate quizzes using AI, create quizzes from documents, practice con
 The platform also includes dedicated functionality for teachers to create and manage quizzes and monitor learner performance.
 
 > 🤖 **AI Generation Status:** AI-powered quiz generation is temporarily unavailable because the current AI usage limit has been reached. Existing quizzes, practice features, progress tracking, achievements, and other learning functionality remain available.
-
+> 
 ---
 
 ## ✨ Features
