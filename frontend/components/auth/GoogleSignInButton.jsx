@@ -141,8 +141,8 @@ export function GoogleSignInButton({
     setIsLoading(true);
     setShowDevModal(false);
     try {
-      const email = customEmail || `alex.chen.google@gmail.com`;
-      const name = customName || (role === 'teacher' ? 'Prof. Alex Chen' : 'Alex Chen');
+      const email = customEmail || `manikanta.student@gmail.com`;
+      const name = customName || 'ManiKanta';
       const fakeToken = `dev-google-token:${email}:${name}:gid_${Date.now()}`;
 
       await googleLogin({ credential: fakeToken, role });
@@ -223,42 +223,19 @@ export function GoogleSignInButton({
             <div className="space-y-2">
               <button
                 type="button"
-                onClick={() => handleSimulateGoogleLogin('alex.chen.student@gmail.com', 'Alex Chen')}
+                onClick={() => handleSimulateGoogleLogin('manikanta.student@gmail.com', 'ManiKanta')}
                 className="w-full p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] hover:border-[#2563EB] hover:bg-blue-50/40 dark:hover:bg-blue-950/20 flex items-center justify-between transition-all group text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-[#4285F4] text-white flex items-center justify-center font-bold text-sm">
-                    A
+                    M
                   </div>
                   <div>
                     <span className="font-bold text-xs text-[#0F172A] dark:text-white block">
-                      Alex Chen (Student)
+                      ManiKanta (Student)
                     </span>
                     <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                      alex.chen.student@gmail.com
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-[#2563EB] opacity-0 group-hover:opacity-100 transition-opacity">
-                  Sign In &rarr;
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSimulateGoogleLogin('prof.sarah.mitchell@gmail.com', 'Prof. Sarah Mitchell')}
-                className="w-full p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] hover:border-[#2563EB] hover:bg-blue-50/40 dark:hover:bg-blue-950/20 flex items-center justify-between transition-all group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#34A853] text-white flex items-center justify-center font-bold text-sm">
-                    S
-                  </div>
-                  <div>
-                    <span className="font-bold text-xs text-[#0F172A] dark:text-white block">
-                      Prof. Sarah Mitchell (Teacher)
-                    </span>
-                    <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                      prof.sarah.mitchell@gmail.com
+                      manikanta.student@gmail.com
                     </span>
                   </div>
                 </div>

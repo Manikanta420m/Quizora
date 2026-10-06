@@ -22,10 +22,10 @@ export default function StudentLeaderboard({ user }) {
   const [boardType, setBoardType] = useState('weekly'); // 'weekly' | 'monthly' | 'class' | 'global'
 
   const fallbackRankings = [
-    { rank: 1, medal: '🥇', name: 'Ananya Sharma', class: 'Student', xp: 1240, score: '🔥 7 day streak', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80' },
-    { rank: 2, medal: '🥈', name: 'Rahul Kumar', class: 'Student', xp: 1180, score: '🔥 5 day streak', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
-    { rank: 3, medal: '🥉', name: 'Priya Patel', class: 'Student', xp: 1105, score: '🔥 3 day streak', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80' },
-    { rank: 4, medal: '4', name: user?.name || 'Mani', class: 'Student', xp: 1050, score: '🔥 2 day streak', isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
+    { rank: 1, medal: '🥇', name: 'Kalyani', class: 'Student', xp: 1240, score: '🔥 7 day streak', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80' },
+    { rank: 2, medal: '🥈', name: 'Teja', class: 'Student', xp: 1180, score: '🔥 5 day streak', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
+    { rank: 3, medal: '🥉', name: 'Vasundhara', class: 'Student', xp: 1105, score: '🔥 3 day streak', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80' },
+    { rank: 4, medal: '4', name: user?.name || 'ManiKanta', class: 'Student', xp: 1050, score: '🔥 2 day streak', isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
   ];
 
   const { data, isLoading } = useQuery({

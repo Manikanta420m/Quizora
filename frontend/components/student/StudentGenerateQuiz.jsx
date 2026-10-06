@@ -144,10 +144,10 @@ export default function StudentGenerateQuiz({ onCancel }) {
 
         // Short pause to show completion step
         setTimeout(() => {
-          router.push(`/quizzes/${qId}`);
+          router.push(`/quizzes/${qId}/play`);
         }, 600);
       } else {
-        router.push('/quizzes');
+        throw new Error('Server returned successful response but missing quiz ID.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'AI generation failed. Please try again.');

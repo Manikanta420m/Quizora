@@ -211,10 +211,10 @@ export default function StudentOverview({
 
   // Weekly Leaderboard snippet
   const weeklyLeaderboard = [
-    { rank: 1, medal: '🥇', name: 'Ananya', xp: 1240, score: 94, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
-    { rank: 2, medal: '🥈', name: 'Rahul', xp: 1180, score: 91, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
-    { rank: 3, medal: '🥉', name: 'Priya', xp: 1105, score: 89, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80' },
-    { rank: 4, medal: '4', name: user?.name || 'Mani', xp: 1050, score: 87, isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
+    { rank: 1, medal: '🥇', name: 'Kalyani', xp: 1240, score: 94, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+    { rank: 2, medal: '🥈', name: 'Teja', xp: 1180, score: 91, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
+    { rank: 3, medal: '🥉', name: 'Vasundhara', xp: 1105, score: 89, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80' },
+    { rank: 4, medal: '4', name: user?.name || 'ManiKanta', xp: 1050, score: 87, isMe: true, avatar: user?.avatar || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
   ];
 
   // Saved Quizzes
