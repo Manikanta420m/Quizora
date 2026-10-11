@@ -28,10 +28,8 @@ frontend/.next
 frontend/out
 .next
 
-# Build / dist output
 dist
 build
 
-# Mac OS X hidden files
 .DS_Store
 **/.DS_Store
