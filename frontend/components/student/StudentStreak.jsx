@@ -14,28 +14,42 @@ import {
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
-export default function StudentStreak({ streak = 7 }) {
-  const [freezeTokens, setFreezeTokens] = useState(2);
+export default function StudentStreak({ streak = 0 }) {
+  const [freezeTokens, setFreezeTokens] = useState(streak > 0 ? 2 : 0);
   const [selectedYear, setSelectedYear] = useState('2026');
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const days = [
-    { name: 'Monday', date: 'Sep 15', completed: true },
-    { name: 'Tuesday', date: 'Sep 16', completed: true },
-    { name: 'Wednesday', date: 'Sep 17', completed: true },
-    { name: 'Thursday', date: 'Sep 18', completed: true },
-    { name: 'Friday', date: 'Sep 19', completed: true },
-    { name: 'Saturday', date: 'Sep 20', completed: true },
-    { name: 'Sunday', date: 'Sep 21 (Today)', completed: true },
-  ];
+  // Calculate actual dynamic days for current week (Mon-Sun)
+  const days = React.useMemo(() => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 is Sun, 1 is Mon...
+    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + diffToMonday + i);
+      const isToday = d.toDateString() === today.toDateString();
+      const dayName = daysOfWeek[i];
+      const dateStr = `${monthNames[d.getMonth()]} ${d.getDate()}${isToday ? ' (Today)' : ''}`;
+      // Day is completed if user has an active streak covering this day
+      const dayIndexFromMonday = i;
+      const todayIndexFromMonday = currentDay === 0 ? 6 : currentDay - 1;
+      const isPastOrToday = dayIndexFromMonday <= todayIndexFromMonday;
+      const completed = streak > 0 && isPastOrToday && (todayIndexFromMonday - dayIndexFromMonday < streak);
+
+      return { name: dayName, date: dateStr, completed };
+    });
+  }, [streak]);
 
   const milestones = [
-    { days: 3, label: 'Early Riser', unlocked: true, xp: 50 },
-    { days: 7, label: 'Habit Builder', unlocked: true, xp: 150 },
-    { days: 14, label: 'Consistency King', unlocked: false, xp: 300 },
-    { days: 30, label: 'Monthly Master', unlocked: false, xp: 1000 },
-    { days: 100, label: 'Unstoppable Legend', unlocked: false, xp: 5000 },
+    { days: 3, label: 'Early Riser', unlocked: streak >= 3, xp: 50 },
+    { days: 7, label: 'Habit Builder', unlocked: streak >= 7, xp: 150 },
+    { days: 14, label: 'Consistency King', unlocked: streak >= 14, xp: 300 },
+    { days: 30, label: 'Monthly Master', unlocked: streak >= 30, xp: 1000 },
+    { days: 100, label: 'Unstoppable Legend', unlocked: streak >= 100, xp: 5000 },
   ];
 
   // Generate mock heatmap data for a full 52-week year
@@ -52,8 +66,9 @@ export default function StudentStreak({ streak = 7 }) {
         else if (rand > 0.4) level = 1;
         
         if (selectedYear === '2026') {
-          // Guarantee current streak shows activity at the end of the year
-          if (w >= 50 && d < streak) level = Math.max(level, 2);
+          // Guarantee current streak shows activity at the end of the year only if streak > 0
+          if (streak > 0 && w >= 50 && d < streak) level = Math.max(level, 2);
+          else if (streak === 0) level = 0;
         } else {
           // Mock lower activity for past years
           if (Math.random() > 0.4) level = 0;
@@ -81,14 +96,16 @@ export default function StudentStreak({ streak = 7 }) {
       {/* Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-[#0F172A] border border-amber-300/30 text-[#0F172A] shadow-xl space-y-2 relative overflow-hidden">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/40 text-xs font-semibold">
-          <Flame className="w-4 h-4 text-[#F59E0B]" />
-          <span>Daily Habit Tracker &bull; Current Streak Active</span>
+          <Flame className={`w-4 h-4 ${streak > 0 ? 'text-[#F59E0B]' : 'text-slate-400'}`} />
+          <span>Daily Habit Tracker &bull; {streak > 0 ? 'Current Streak Active' : 'Start Your Streak'}</span>
         </div>
         <h1 className="text-3xl font-black tracking-tight flex items-center gap-2 text-[#0F172A]">
-          🔥 {streak} Day Learning Streak!
+          🔥 {streak} Day Learning Streak{streak === 0 ? ' (Start Today!)' : '!'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 max-w-xl">
-          Complete at least 1 quiz every day to maintain your streak, earn multiplier XP, and unlock exclusive badges.
+          {streak > 0 
+            ? 'Complete at least 1 quiz every day to maintain your streak, earn multiplier XP, and unlock exclusive badges.'
+            : 'Complete your first quiz today to build your streak, earn multiplier XP, and unlock exclusive badges.'}
         </p>
       </div>
 
@@ -105,8 +122,12 @@ export default function StudentStreak({ streak = 7 }) {
                   : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#94A3B8]'
               }`}
             >
-              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs mx-auto">
-                ✓
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs mx-auto ${
+                d.completed
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                {d.completed ? '✓' : '·'}
               </div>
               <span className="font-bold text-xs block">{d.name.slice(0, 3)}</span>
               <span className="text-[10px] text-slate-500 block">{d.date}</span>

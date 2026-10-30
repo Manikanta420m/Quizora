@@ -157,18 +157,18 @@ export default function StudentOverview({
     totalTimeSpentSeconds: 17280, // ~4.8 hours
   };
 
-  const streakDays = user?.streak || 7;
-  const bestStreak = 14;
+  const streakDays = typeof user?.streak === 'number' ? user.streak : 0;
+  const bestStreak = user?.bestStreak ? Math.max(user.bestStreak, streakDays) : streakDays;
 
-  // Streak days of week
+  // Streak days of week: completed only if active streak covers it
   const weekDays = [
-    { label: 'M', done: true },
-    { label: 'T', done: true },
-    { label: 'W', done: true },
-    { label: 'T', done: true },
-    { label: 'F', done: true },
-    { label: 'S', done: true },
-    { label: 'S', done: true },
+    { label: 'M', done: streakDays >= 1 },
+    { label: 'T', done: streakDays >= 2 },
+    { label: 'W', done: streakDays >= 3 },
+    { label: 'T', done: streakDays >= 4 },
+    { label: 'F', done: streakDays >= 5 },
+    { label: 'S', done: streakDays >= 6 },
+    { label: 'S', done: streakDays >= 7 },
   ];
 
   // Weak topics list
@@ -248,10 +248,16 @@ export default function StudentOverview({
 
   // Recent Activity
   const recentActivities = [
-    { id: 'act_1', icon: CheckCircle2, iconColor: 'text-emerald-500', title: 'Completed JavaScript Quiz', subtitle: 'Score: 92% · 10 min ago' },
-    { id: 'act_2', icon: Flame, iconColor: 'text-amber-500', title: 'Maintained 7-day streak', subtitle: 'Yesterday' },
-    { id: 'act_3', icon: Trophy, iconColor: 'text-yellow-500', title: 'Earned "Perfect Score" badge', subtitle: '2 days ago' },
-    { id: 'act_4', icon: BookOpen, iconColor: 'text-[#2563EB]', title: 'Started React Hooks Practice', subtitle: '3 days ago' },
+    ...(streakDays > 0 ? [
+      { id: 'act_1', icon: CheckCircle2, iconColor: 'text-emerald-500', title: 'Completed Technical Quiz', subtitle: 'Score: 92% · Recently' },
+      { id: 'act_2', icon: Flame, iconColor: 'text-amber-500', title: `Maintained ${streakDays}-day streak`, subtitle: 'Active' },
+      { id: 'act_3', icon: Trophy, iconColor: 'text-yellow-500', title: 'Earned XP Bonus', subtitle: 'Active' },
+      { id: 'act_4', icon: BookOpen, iconColor: 'text-[#2563EB]', title: 'Practice Session', subtitle: 'Recent' },
+    ] : [
+      { id: 'act_welcome', icon: Sparkles, iconColor: 'text-blue-500', title: 'Welcome to Quizora!', subtitle: 'Complete your first quiz to start your activity timeline' },
+      { id: 'act_streak_zero', icon: Flame, iconColor: 'text-amber-500', title: '0-Day Streak', subtitle: 'Take a quiz today to start building your daily habit' },
+      { id: 'act_ai', icon: Target, iconColor: 'text-indigo-500', title: 'Generate AI Assessments', subtitle: 'Create quizzes from any topic or PDF in seconds' },
+    ]),
   ];
 
   // Core Achievements preview
@@ -304,7 +310,7 @@ export default function StudentOverview({
               Good morning, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{displayName}</span>! 👋
             </h1>
             <p className="text-sm sm:text-base text-slate-600 font-medium">
-              Ready to test your knowledge today? Master weak topics, keep your 7-day streak alive, and climb the leaderboard!
+              Ready to test your knowledge today? Master weak topics, {streakDays > 0 ? `keep your ${streakDays}-day streak alive` : 'start your learning streak today'}, and climb the leaderboard!
             </p>
 
             {/* Daily Objective Actionable Callout */}
@@ -443,12 +449,12 @@ export default function StudentOverview({
                           Your Learning Streak
                         </span>
                         <h3 className="text-2xl font-black text-[#0F172A] flex items-center gap-2">
-                          <Flame className="w-6 h-6 text-[#F59E0B]" />
+                          <Flame className={`w-6 h-6 ${streakDays > 0 ? 'text-[#F59E0B]' : 'text-slate-400'}`} />
                           <span>{streakDays} Day Streak</span>
                         </h3>
                       </div>
                       <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs self-start sm:self-auto">
-                        🔥 Best: {bestStreak} Days
+                        🔥 Best: {bestStreak} {bestStreak === 1 ? 'Day' : 'Days'}
                       </span>
                     </div>
           
@@ -458,17 +464,23 @@ export default function StudentOverview({
                       <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center">
                         {weekDays.map((d, i) => (
                           <div key={i} className="flex flex-col items-center gap-2">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto rounded-full bg-gradient-to-b from-amber-50 to-amber-100/50 border-2 border-amber-300 text-amber-600 flex items-center justify-center font-bold text-sm shadow-sm transition-transform hover:scale-110">
-                              ✓
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-transform hover:scale-110 ${
+                              d.done
+                                ? 'bg-gradient-to-b from-amber-50 to-amber-100/50 border-2 border-amber-300 text-amber-600'
+                                : 'bg-[#F8FAFC] border-2 border-dashed border-[#E2E8F0] text-slate-300'
+                            }`}>
+                              {d.done ? '✓' : '·'}
                             </div>
-                            <span className="text-xs font-bold text-[#64748B] uppercase">{d.label}</span>
+                            <span className={`text-xs font-bold uppercase ${d.done ? 'text-amber-800' : 'text-[#64748B]'}`}>{d.label}</span>
                           </div>
                         ))}
                       </div>
                     </div>
           
                     <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-xs flex items-center justify-between shadow-2xs">
-                      <span className="font-semibold text-amber-900">Complete one quiz today to keep your streak alive!</span>
+                      <span className="font-semibold text-amber-900">
+                        {streakDays > 0 ? 'Complete one quiz today to keep your streak alive!' : 'Complete your first quiz today to start your learning streak!'}
+                      </span>
                       <span className="font-black text-amber-700 bg-white px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs whitespace-nowrap shrink-0">12h left</span>
                     </div>
           
@@ -479,11 +491,11 @@ export default function StudentOverview({
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          { label: '3 Days', achieved: true },
-                          { label: '7 Days', achieved: true },
-                          { label: '14 Days', achieved: false },
-                          { label: '30 Days', achieved: false },
-                          { label: '100 Days', achieved: false },
+                          { label: '3 Days', achieved: streakDays >= 3 },
+                          { label: '7 Days', achieved: streakDays >= 7 },
+                          { label: '14 Days', achieved: streakDays >= 14 },
+                          { label: '30 Days', achieved: streakDays >= 30 },
+                          { label: '100 Days', achieved: streakDays >= 100 },
                         ].map((m) => (
                           <span
                             key={m.label}

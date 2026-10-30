@@ -92,10 +92,13 @@ export default function StudentDashboard({
   }, []);
 
   // Notifications (Module 19)
+  const streakDays = typeof user?.streak === 'number' ? user.streak : 0;
   const [notifications, setNotifications] = useState([
     { id: 1, title: '🎯 Your daily goal is incomplete.', time: '1h ago', unread: true },
-    { id: 2, title: '🔥 Your 7-day streak is at risk (less than 12h left).', time: '2h ago', unread: true },
-    { id: 3, title: '🏆 You moved to #4 on the weekly leaderboard!', time: '4h ago', unread: true },
+    ...(streakDays > 0
+      ? [{ id: 2, title: `🔥 Your ${streakDays}-day streak is at risk (less than 12h left).`, time: '2h ago', unread: true }]
+      : [{ id: 2, title: '🔥 Complete a quiz today to start your learning streak!', time: '1h ago', unread: true }]),
+    { id: 3, title: '🏆 You moved up on the weekly leaderboard!', time: '4h ago', unread: true },
     { id: 4, title: '🤖 Your recommended DSA quiz is ready.', time: '1d ago', unread: false },
     { id: 5, title: '📚 New quiz "Web Dev Sprint 4" assigned by your teacher.', time: '2d ago', unread: false },
   ]);
@@ -153,7 +156,6 @@ export default function StudentDashboard({
   };
 
   const displayName = user?.name || 'Mani';
-  const streakDays = user?.streak || 7;
 
   return (
     <div className="h-screen h-[100dvh] w-full flex bg-[#F8FAFC] text-[#111827] overflow-hidden">
@@ -390,7 +392,7 @@ export default function StudentDashboard({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold font-mono transition-colors shadow-2xs cursor-pointer"
               title="View Learning Streak"
             >
-              <Flame className="w-4 h-4 text-[#F59E0B]" />
+              <Flame className={`w-4 h-4 ${streakDays > 0 ? 'text-[#F59E0B]' : 'text-slate-400'}`} />
               <span>{streakDays}</span>
             </button>
 
@@ -588,7 +590,7 @@ export default function StudentDashboard({
           )}
 
           {activeTab === 'achievements' && (
-            <StudentAchievements />
+            <StudentAchievements achievementsData={achievementsData} user={user} />
           )}
 
           {activeTab === 'settings' && (

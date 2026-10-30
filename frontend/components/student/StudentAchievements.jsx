@@ -15,17 +15,32 @@ import {
 import { Card } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 
-export default function StudentAchievements() {
-  const badges = [
-    { id: 'b1', name: 'First Quiz', desc: 'Completed your very first technical assessment', icon: '🏆', unlocked: true, date: 'Sep 10' },
-    { id: 'b2', name: '7 Day Streak', desc: 'Maintained continuous daily practice for a full week', icon: '🔥', unlocked: true, date: 'Sep 17' },
-    { id: 'b3', name: 'Perfect Score', desc: 'Scored 100% accuracy on any standard quiz', icon: '🎯', unlocked: true, date: 'Sep 15' },
-    { id: 'b4', name: 'Speed Learner', desc: 'Completed a 10-question quiz in under 3 minutes', icon: '⚡', unlocked: true, date: 'Sep 18' },
-    { id: 'b5', name: '25 Quizzes', desc: 'Reached a total milestone of 25 completed quizzes', icon: '📚', unlocked: false, progress: '24 / 25' },
-    { id: 'b6', name: 'Topic Master', desc: 'Attained 90%+ mastery across 3 distinct programming topics', icon: '🧠', unlocked: false, progress: '2 / 3' },
-    { id: 'b7', name: '30 Day Streak', desc: 'Unbroken daily study habit for a month', icon: '👑', unlocked: false, progress: '7 / 30' },
-    { id: 'b8', name: 'Bug Hunter', desc: 'Correctly resolved 50 tricky debug code questions', icon: '🐛', unlocked: false, progress: '32 / 50' },
-  ];
+export default function StudentAchievements({ achievementsData, user }) {
+  const userStreak = typeof user?.streak === 'number' ? user.streak : 0;
+  const userXp = typeof user?.xp === 'number' ? user.xp : 0;
+
+  // Use API badges if available, otherwise compute accurate unlock state
+  const apiBadges = achievementsData?.badges;
+  const badges = apiBadges && apiBadges.length > 0 
+    ? apiBadges.map((b) => ({
+        id: b.id,
+        name: b.title,
+        desc: b.description,
+        icon: b.icon === 'Flame' ? '🔥' : b.icon === 'Zap' ? '⚡' : b.icon === 'Award' ? '🏆' : b.icon === 'Timer' ? '⏱️' : '🎖️',
+        unlocked: !!b.isUnlocked,
+        progress: b.progressLabel || (b.isUnlocked ? 'Unlocked' : `${b.progress || 0}%`),
+        date: b.unlockedAt ? new Date(b.unlockedAt).toLocaleDateString() : undefined,
+      }))
+    : [
+        { id: 'b1', name: 'First Quiz', desc: 'Completed your very first technical assessment', icon: '🏆', unlocked: userXp > 0, progress: userXp > 0 ? 'Unlocked' : '0 / 1' },
+        { id: 'b2', name: '3 Day Streak', desc: 'Maintained continuous daily practice for 3 days', icon: '🔥', unlocked: userStreak >= 3, progress: `${Math.min(userStreak, 3)} / 3` },
+        { id: 'b3', name: '7 Day Streak', desc: 'Maintained continuous daily practice for a full week', icon: '⚡', unlocked: userStreak >= 7, progress: `${Math.min(userStreak, 7)} / 7` },
+        { id: 'b4', name: 'Perfect Score', desc: 'Scored 100% accuracy on any standard quiz', icon: '🎯', unlocked: false, progress: 'Pending' },
+        { id: 'b5', name: 'Speed Learner', desc: 'Completed a 10-question quiz in under 3 minutes', icon: '⚡', unlocked: false, progress: 'Pending' },
+        { id: 'b6', name: '25 Quizzes', desc: 'Reached a total milestone of 25 completed quizzes', icon: '📚', unlocked: false, progress: '0 / 25' },
+        { id: 'b7', name: 'Topic Master', desc: 'Attained 90%+ mastery across 3 distinct programming topics', icon: '🧠', unlocked: false, progress: '0 / 3' },
+        { id: 'b8', name: '30 Day Streak', desc: 'Unbroken daily study habit for a month', icon: '👑', unlocked: userStreak >= 30, progress: `${Math.min(userStreak, 30)} / 30` },
+      ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
