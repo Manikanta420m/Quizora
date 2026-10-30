@@ -156,7 +156,7 @@ export default function StudentDashboard({
   const streakDays = user?.streak || 7;
 
   return (
-    <div className="h-screen w-full flex bg-[#F8FAFC] text-[#111827] overflow-hidden">
+    <div className="h-screen h-[100dvh] w-full flex bg-[#F8FAFC] text-[#111827] overflow-hidden">
       {/* ================================================================= */}
       {/* DESKTOP SIDEBAR (App Shell Layout matching screenshot) */}
       {/* ================================================================= */}
@@ -179,7 +179,7 @@ export default function StudentDashboard({
             </button>
           </div>
           
-          <div className="relative z-10 flex-1 overflow-y-auto py-6 custom-scrollbar flex flex-col">
+          <div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain py-6 custom-scrollbar flex flex-col">
             {sidebarGroups.map((group, gIdx) => (
               <div key={group.title} className="mb-8">
                 <div className="px-6 mb-3 flex items-center justify-between text-xs font-black uppercase tracking-widest text-slate-400">
@@ -263,7 +263,7 @@ export default function StudentDashboard({
       {/* ================================================================= */}
       {/* MAIN CONTENT AREA */}
       {/* ================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#F8FAFC]">
+      <div className="flex-1 flex flex-col min-w-0 h-screen h-[100dvh] overflow-hidden bg-[#F8FAFC]">
         {/* TOPBAR */}
         <header className="h-20 shrink-0 border-b border-[#DBEAFE] bg-[#EFF6FF]/95 backdrop-blur-2xl shadow-sm z-40 w-full flex items-center">
           <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
@@ -471,7 +471,7 @@ export default function StudentDashboard({
       {/* ================================================================= */}
       {/* MAIN LAYOUT: CONTENT */}
       {/* ================================================================= */}
-      <main className="flex-1 overflow-y-auto w-full bg-[#F8FAFC] p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto overscroll-y-contain w-full bg-[#F8FAFC] p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto w-full min-h-[calc(100vh-100px)]">
         {/* Mobile Drawer */}
         {isMobileSidebarOpen && (

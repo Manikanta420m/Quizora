@@ -1,7 +1,7 @@
 import './globals.css';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import Providers from './providers';
-import Footer from '@/components/ui/Footer';
+import ConditionalFooter from '@/components/ui/ConditionalFooter';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -44,9 +44,7 @@ export default function RootLayout({ children }) {
         />
         <Providers>
           <div className="flex-1 flex flex-col relative z-10">{children}</div>
-          <div className="relative z-10">
-            <Footer />
-          </div>
+          <ConditionalFooter />
         </Providers>
       </body>
     </html>
